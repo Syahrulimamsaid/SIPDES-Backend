@@ -1,9 +1,6 @@
-import { DataTypes } from "sequelize";
-import sequelize from "./index";  const Presence = sequelize.define('Presence', {
-    id: {
-      type: DataTypes.UUID,
-      primaryKey: true,
-    },
+export default (sequelize:any, DataTypes:any) => {
+  return sequelize.define("Presence", {
+    id: { type: DataTypes.UUID, primaryKey: true },
     userId: DataTypes.UUID,
     locationId: DataTypes.UUID,
     in: DataTypes.DATE,
@@ -14,14 +11,6 @@ import sequelize from "./index";  const Presence = sequelize.define('Presence', 
     out_long: DataTypes.DECIMAL(11, 8),
     status: DataTypes.ENUM('hadir', 'terlambat', 'alpa', 'cuti'),
   }, {
-    tableName: 'presences',
+    tableName: "presences",
   });
-
-  Presence.associate = (models:any) => {
-    Presence.belongsTo(models.User, { foreignKey: 'userId' });
-
-    Presence.belongsTo(models.Location, { foreignKey: 'locationId' });
-  };
-
-
-export default Presence;
+};

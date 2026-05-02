@@ -9,8 +9,8 @@ export default {
         primaryKey: true,
         defaultValue: Sequelize.UUIDV4,
       },
-      nik_nip: {
-        type: Sequelize.STRING(50),
+      phone_number: {
+        type: Sequelize.STRING(15),
         unique: true,
       },
       password: {

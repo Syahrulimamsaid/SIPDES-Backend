@@ -1,36 +1,58 @@
-'use strict';
+import { DataTypes } from "sequelize";
+import sequelize from "../application/database";
 
-const fs = require('fs');
-const path = require('path');
-const Sequelize = require('sequelize');
-const basename = path.basename(__filename);
-const db: { [key: string]: any } = {};
+import UserModel from "./user.model";
+import VillageModel from "./village.model";
+import PresenceModel from "./presence.model";
+import LocationModel from "./location.model";
+import LocationAccessModel from "./location-access.model";
+import DistrictModel from "./district.model";
+import CalendarModel from "./calendar.model";
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASS,
-  {
-    host: process.env.DB_HOST,
-    dialect: process.env.DB_DIALECT,
-    logging: false,
-  }
-);
+const User = UserModel(sequelize, DataTypes);
+const Village = VillageModel(sequelize, DataTypes);
+const Presence = PresenceModel(sequelize, DataTypes);
+const Location = LocationModel(sequelize, DataTypes);
+const LocationAccess = LocationAccessModel(sequelize, DataTypes);
+const District = DistrictModel(sequelize, DataTypes);
+const Calendar = CalendarModel(sequelize, DataTypes);
 
-fs.readdirSync(__dirname)
-  .filter((file: string) => file !== basename && file.endsWith('.js'))
-  .forEach((file: any) => {
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
-    db[model.name] = model;
-  });
-
-Object.keys(db).forEach(modelName => {
-  if (db[modelName].associate) {
-    db[modelName].associate(db);
-  }
+User.belongsTo(Village, { foreignKey: "villageId" });
+User.hasMany(Presence, { foreignKey: "userId" });
+User.belongsToMany(Location, {
+  through: LocationAccess,
+  foreignKey: "userId",
+  otherKey: "locationId",
 });
 
-db.sequelize = sequelize;
-db.Sequelize = Sequelize;
+Village.hasMany(User, { foreignKey: "villageId" });
+Village.hasMany(Location, { foreignKey: "villageId" });
 
-export default db;
+Presence.belongsTo(User, { foreignKey: "userId" });
+Presence.belongsTo(Location, { foreignKey: "locationId" });
+
+Location.belongsTo(Village, { foreignKey: "villageId" });
+Location.hasMany(Presence, { foreignKey: "locationId" });
+Location.belongsToMany(User, {
+  through: LocationAccess,
+  foreignKey: "locationId",
+  otherKey: "userId",
+});
+
+LocationAccess.belongsTo(User, { foreignKey: "userId" });
+LocationAccess.belongsTo(Location, { foreignKey: "locationId" });
+
+District.hasMany(Village, { foreignKey: "districtId" });
+
+Village.belongsTo(District, { foreignKey: "districtId" });
+
+export {
+  sequelize,
+  User,
+  Village,
+  Presence,
+  Location,
+  LocationAccess,
+  District,
+  Calendar,
+};
