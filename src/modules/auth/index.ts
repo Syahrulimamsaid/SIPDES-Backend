@@ -6,12 +6,6 @@ import { isAuth } from "../../middlewares/auth-middleware";
 
 const auth = new Elysia({ prefix: "/auth" });
 auth
-  .use(
-    jwt({
-      name: "jwt",
-      secret: process.env.JWT_SECRET!,
-    }),
-  )
   .post("/sign-in", async ({ body, cookie: { session }, jwt }) => {
     const result = await AuthController.signIn(body, jwt);
 

@@ -22,12 +22,4 @@ export class AuthController {
       token,
     };
   }
-
-
-  static async signCheck(headers: any) {
-    const token = headers.authorization?.replace("Bearer ", "");
-    console.log(token);
-    const user = await AuthService.get(token);
-    return user;
-  }
 }

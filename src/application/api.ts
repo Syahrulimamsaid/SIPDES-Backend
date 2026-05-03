@@ -1,8 +1,10 @@
 import { Elysia } from "elysia";
-import auth from "../modules/auth/index";
 import jwt from "@elysia/jwt";
 import cors from "@elysiajs/cors";
 import { isAuth } from "../middlewares/auth-middleware";
+import auth from "../modules/auth/index";
+import location from "../modules/location/index";
+import presence from "../modules/presence/index";
 
 const elysia = new Elysia({ prefix: "/api" });
 elysia
@@ -20,7 +22,9 @@ elysia
     }),
   )
   .use(auth)
-  .onBeforeHandle(isAuth);
+  .onBeforeHandle(isAuth)
+  .use(location)
+  .use(presence);
 //setelah ini route sudah login
 
 export default elysia;
