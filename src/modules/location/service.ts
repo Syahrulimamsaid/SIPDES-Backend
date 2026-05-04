@@ -54,9 +54,9 @@ export class LocationService {
 
       if (p) {
         if (p.in && !p.out) {
-          status = "MASUK";
+          status = "masuk";
         } else if (p.in && p.out) {
-          status = "HADIR";
+          status = "hadir";
         }
       }
 

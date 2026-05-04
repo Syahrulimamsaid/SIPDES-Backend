@@ -1,9 +1,26 @@
 import { t, type UnwrapSchema } from "elysia";
 
 export const PresenceModel = {
+  presenceGetResponse: t.Array(
+    t.Object({
+      id: t.String(),
+      date: t.Date(),
+      in: t.Date(),
+      out: t.Nullable(t.Date()),
+      status: t.Union([
+        t.Literal("hadir"),
+        t.Literal("terlambat"),
+        t.Literal("alpa"),
+        t.Literal("cuti"),
+      ]),
+      location: t.Object({
+        id: t.String(),
+        name: t.String(),
+      }),
+    }),
+  ),
   presenceResponse: t.Object({
     type: t.Union([t.Literal("IN"), t.Literal("OUT")]),
-
     data: t.Object({
       id: t.String(),
       userId: t.String(),

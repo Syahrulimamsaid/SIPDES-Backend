@@ -1,11 +1,60 @@
 import type { PresenceModel } from "./model";
 import { ResponseError } from "../../response/response-error";
 import { Presence, Location } from "../../models/index";
-import { Op } from "sequelize";
+import { Op, fn, col } from "sequelize";
 import { getDistance } from "../../helpers/getDistance";
 import { v4 as uuidv4 } from "uuid";
 
 export class PresenceService {
+  static async get(user: any) {
+    const startOfDay = new Date(
+      new Date().getFullYear(),
+      new Date().getMonth(),
+      1,
+    );
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const presence = await Presence.findAll({
+      attributes: [
+        "id",
+        [fn("DATE", col("in")), "date"],
+        "in",
+        "out",
+        "status",
+      ],
+      include: [
+        {
+          model: Location,
+          attributes: ["id", "name"],
+          required: true,
+        },
+      ],
+      where: {
+        userId: user.id,
+        in: {
+          [Op.between]: [startOfDay, endOfDay],
+        },
+      },
+    });
+
+    const result = presence.map((data:any) => {
+      return {
+        id: data.id,
+        date: data.get("date"),
+        in: data.in,
+        out: data.out,
+        status: data.status,
+        location: {
+          id: data.Location?.id,
+          name: data.Location?.name,
+        },
+      };
+    });
+    return result;
+  }
   static async presence(body: PresenceModel["presenceBody"], user: any) {
     const location = await Location.findOne({
       where: { id: body.locationId },
