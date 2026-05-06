@@ -24,7 +24,7 @@ elysia
     rateLimit({
       duration: 6000 * 15 * 10,
       max: 30,
-      errorResponse: new Response(`{status: "rate-Limiter", message: "To Many Request"}`, {
+      errorResponse: new Response("To Many Request", {
         status: 429,
         headers: new Headers({
           "Content-Type": "application/json",

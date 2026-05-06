@@ -8,7 +8,7 @@ const auth = new Elysia({ prefix: "/auth" });
 auth
   .post(
     "/sign-in",
-    async ({ body, cookie: { auth }, jwt }:any) => {
+    async ({ body, cookie: { auth }, jwt }: any) => {
       const result = await AuthController.signIn(body, jwt);
 
       auth.set({
@@ -21,10 +21,13 @@ auth
       });
 
       return result;
-    }
+    },
+    {
+      body: AuthModel.signInBody,
+    },
   )
   .onBeforeHandle(isAuth)
-  .get("/me", ({ user }:any) => {
+  .get("/me", ({ user }: any) => {
     return user;
   });
 

@@ -4,6 +4,7 @@ export const AuthModel = {
   signInBody: t.Object({
     phone_number: t.String(),
     password: t.String(),
+    device: t.String(),
   }),
   signInResponse: t.Object({
     id: t.String(),
@@ -12,9 +13,9 @@ export const AuthModel = {
     role: t.String(),
     token: t.String(),
     village: t.Object({
-     id: t.String(),
-     name: t.String(),
-     address: t.String(),
+      id: t.String(),
+      name: t.String(),
+      address: t.String(),
     }),
   }),
   signCheckResponse: t.Object({
