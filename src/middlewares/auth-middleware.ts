@@ -1,17 +1,17 @@
 export const isAuth = async (ctx: any) => {
-  const auth = ctx.headers.authorization;
-  
-  if (!auth?.startsWith("Bearer ")) {
-    ctx.set.status = 401;
+  const { cookie, jwt, set } = ctx;
+  const token = cookie.auth?.value;
+
+  if (!token) {
+    set.status = 401;
     return { message: "Unauthorized" };
   }
-  
-  const token = auth.split(" ")[1];
+
   try {
-    const payload = await ctx.jwt.verify(token);
+    const payload = await jwt.verify(token);
     ctx.user = payload;
-  } catch {
-    ctx.set.status = 401;
-    return { message: "Invalid token" };
+  } catch (err) {
+    set.status = 401;
+    return { message: "Token invalid / expired" };
   }
 };

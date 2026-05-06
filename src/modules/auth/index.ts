@@ -6,21 +6,25 @@ import { isAuth } from "../../middlewares/auth-middleware";
 
 const auth = new Elysia({ prefix: "/auth" });
 auth
-  .post("/sign-in", async ({ body, cookie: { session }, jwt }) => {
-    const result = await AuthController.signIn(body, jwt);
+  .post(
+    "/sign-in",
+    async ({ body, cookie: { auth }, jwt }:any) => {
+      const result = await AuthController.signIn(body, jwt);
 
-    session.set({
-      value: result.token,
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 60 * 60,
-    });
+      auth.set({
+        value: result.token,
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax", // none
+        path: "/",
+        maxAge: 60 * 1,
+      });
 
-    return result;
-  })
+      return result;
+    }
+  )
   .onBeforeHandle(isAuth)
-  .get("/me", ({ user }) => {
+  .get("/me", ({ user }:any) => {
     return user;
   });
 

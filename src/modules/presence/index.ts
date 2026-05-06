@@ -6,7 +6,7 @@ const location = new Elysia({ prefix: "/presence" });
 location
   .get(
     "/",
-    async ({ user }) => {
+    async ({ user }:any) => {
       const result = await PresenceController.get(user);
       return result;
     },

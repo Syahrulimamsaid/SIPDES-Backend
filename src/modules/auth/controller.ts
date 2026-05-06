@@ -13,7 +13,7 @@ export class AuthController {
         role: user.role,
       },
       {
-        exp: process.env.JWT_EXPIRES_IN || "1h",
+        expiresIn: process.env.JWT_EXPIRES_IN || "30m",
       },
     );
 
@@ -21,5 +21,9 @@ export class AuthController {
       ...user,
       token,
     };
+  }
+
+  static async signout(jwt: any) {
+    jwt.signout();
   }
 }

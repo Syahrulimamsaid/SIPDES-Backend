@@ -35,17 +35,4 @@ export class AuthService {
       village : user.Village
     };
   }
-
-  static async get(session: any) {
-    const user = await User.findOne({
-      where: { id: session.id },
-      attributes: ["id", "phone_number", "password", "fullname", "role"],
-    });
-
-    if (!user || user.length == 0) {
-      throw ResponseError(404, "Data not found");
-    }
-
-    return user.get();
-  }
 }

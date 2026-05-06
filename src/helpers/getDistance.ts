@@ -4,7 +4,7 @@ export function getDistance(
   lat2: number,
   lon2: number
 ) {
-  const R = 6371000; // meter
+  const R = 6371000;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
 
