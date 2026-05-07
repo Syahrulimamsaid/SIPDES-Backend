@@ -11,10 +11,10 @@ export default {
       },
       name: Sequelize.STRING(100),
       address: Sequelize.STRING(100),
-      districtId: {
+      subDistrictId: {
         type: Sequelize.UUID,
         references: {
-          model: 'districts',
+          model: 'sub_districts',
           key: 'id',
         },
         onDelete: 'CASCADE',

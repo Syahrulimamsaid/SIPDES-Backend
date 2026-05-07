@@ -23,7 +23,7 @@ elysia
   .use(
     rateLimit({
       duration: 6000 * 15 * 10,
-      max: 30,
+      max: 100,
       errorResponse: new Response("To Many Request", {
         status: 429,
         headers: new Headers({

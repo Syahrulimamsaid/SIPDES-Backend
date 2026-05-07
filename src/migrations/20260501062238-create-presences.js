@@ -17,10 +17,10 @@ export default {
         },
         onDelete: 'CASCADE',
       },
-      locationId: {
+      locationAccessId: {
         type: Sequelize.UUID,
         references: {
-          model: 'locations',
+          model: 'locations_access',
           key: 'id',
         },
       },

@@ -3,7 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 export default {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('districts', {
+    await queryInterface.createTable('sub_districts', {
       id: {
         type: Sequelize.UUID,
         primaryKey: true,
@@ -19,6 +19,6 @@ export default {
   },
 
   async down(queryInterface) {
-    await queryInterface.dropTable('districts');
+    await queryInterface.dropTable('sub_districts');
   }
 };
