@@ -1,8 +1,8 @@
 export const isAuth = async (ctx: any) => {
   const { cookie, jwt, set } = ctx;
   const token = cookie.auth?.value;
-  console.log(token);
-  console.log(cookie);
+  // console.log(token);
+  // console.log(cookie);
   if (!token) {
     set.status = 401;
     return { message: "Unauthorized" };

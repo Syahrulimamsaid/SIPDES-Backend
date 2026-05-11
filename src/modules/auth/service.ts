@@ -31,12 +31,12 @@ export class AuthService {
     if (!(await bcrypt.compare(body.password, user.password)))
       throw ResponseError(400, "Invalid phone number or password");
 
-    if (!user.device || user.device == null) {
-      user.update({ device: body.device });
-    } else {
-      if ((user.device != body.device))
-        throw ResponseError(400, "Invalid device");
-    }
+    // if (!user.device || user.device == null) {
+    //   user.update({ device: body.device });
+    // } else {
+    //   if ((user.device != body.device))
+    //     throw ResponseError(400, "Invalid device");
+    // }
     
     return {
       id: user.id,

@@ -17,7 +17,7 @@ auth
         secure: false,
         sameSite: "lax", // none
         path: "/",
-        maxAge: 60 * 1,
+        maxAge: 60 * 30,
       });
 
       return result;

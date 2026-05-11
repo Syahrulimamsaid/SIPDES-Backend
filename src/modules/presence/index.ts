@@ -6,13 +6,25 @@ const location = new Elysia({ prefix: "/presence" });
 location
   .get(
     "/",
-    async ({ user }:any) => {
+    async ({ user }: any) => {
       const result = await PresenceController.get(user);
       return result;
     },
     {
       response: {
         200: PresenceModel.presenceGetResponse,
+      },
+    },
+  )
+  .get(
+    "/:id",
+    async ({ params: { id }, user }: any) => {
+      const result = await PresenceController.getById(id, user);
+      return result;
+    },
+    {
+      response: {
+        200: PresenceModel.presenceGetSingleResponse,
       },
     },
   )

@@ -6,16 +6,18 @@ import VillageModel from "./village.model";
 import PresenceModel from "./presence.model";
 import LocationModel from "./location.model";
 import LocationAccessModel from "./location-access.model";
-import DistrictModel from "./district.model";
+import DistrictModel from "./sub-district.model";
 import CalendarModel from "./calendar.model";
+import SettingModel from "./setting.model";
 
 const User = UserModel(sequelize, DataTypes);
 const Village = VillageModel(sequelize, DataTypes);
 const Presence = PresenceModel(sequelize, DataTypes);
 const Location = LocationModel(sequelize, DataTypes);
 const LocationAccess = LocationAccessModel(sequelize, DataTypes);
-const District = DistrictModel(sequelize, DataTypes);
+const SubDistrict = DistrictModel(sequelize, DataTypes);
 const Calendar = CalendarModel(sequelize, DataTypes);
+const Setting = SettingModel(sequelize, DataTypes);
 
 User.belongsTo(Village, { foreignKey: "villageId" });
 User.hasMany(Presence, { foreignKey: "userId" });
@@ -29,10 +31,10 @@ Village.hasMany(User, { foreignKey: "villageId" });
 Village.hasMany(Location, { foreignKey: "villageId" });
 
 Presence.belongsTo(User, { foreignKey: "userId" });
-Presence.belongsTo(Location, { foreignKey: "locationId" });
+Presence.belongsTo(LocationAccess, { foreignKey: "locationAccessId" });
 
 Location.belongsTo(Village, { foreignKey: "villageId" });
-Location.hasMany(Presence, { foreignKey: "locationId" });
+LocationAccess.hasMany(Presence, { foreignKey: "locationAccessId" });
 Location.belongsToMany(User, {
   through: LocationAccess,
   foreignKey: "locationId",
@@ -42,9 +44,9 @@ Location.belongsToMany(User, {
 LocationAccess.belongsTo(User, { foreignKey: "userId" });
 LocationAccess.belongsTo(Location, { foreignKey: "locationId" });
 
-District.hasMany(Village, { foreignKey: "districtId" });
+SubDistrict.hasMany(Village, { foreignKey: "subDistrictId" });
 
-Village.belongsTo(District, { foreignKey: "districtId" });
+Village.belongsTo(SubDistrict, { foreignKey: "subDistrictId" });
 
 export {
   sequelize,
@@ -53,6 +55,7 @@ export {
   Presence,
   Location,
   LocationAccess,
-  District,
+  SubDistrict,
   Calendar,
+  Setting
 };

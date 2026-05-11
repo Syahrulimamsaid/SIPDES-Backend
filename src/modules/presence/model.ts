@@ -1,21 +1,51 @@
 import { t, type UnwrapSchema } from "elysia";
 
 export const PresenceModel = {
+  presenceGetSingleResponse: t.Object({
+    id: t.String(),
+    date: t.Date(),
+    in: t.Nullable(t.Date()),
+    out: t.Nullable(t.Date()),
+    in_lat: t.Number(),
+    in_long: t.Number(),
+    out_lat: t.Nullable(t.Number()),
+    out_long: t.Nullable(t.Number()),
+    status: t.Union([
+      t.Literal("hadir"),
+      t.Literal("terlambat"),
+      t.Literal("pulang"),
+      t.Literal("alpa"),
+      t.Literal("cuti"),
+    ]),
+    location_access: t.Object({
+      id: t.String(),
+      description: t.String(),
+      location: t.Object({
+        id: t.String(),
+        name: t.String(),
+      }),
+    }),
+  }),
   presenceGetResponse: t.Array(
     t.Object({
       id: t.String(),
       date: t.Date(),
-      in: t.Date(),
+      in: t.Nullable(t.Date()),
       out: t.Nullable(t.Date()),
       status: t.Union([
         t.Literal("hadir"),
         t.Literal("terlambat"),
+        t.Literal("pulang"),
         t.Literal("alpa"),
         t.Literal("cuti"),
       ]),
-      location: t.Object({
+      location_access: t.Object({
         id: t.String(),
-        name: t.String(),
+        description: t.String(),
+        location: t.Object({
+          id: t.String(),
+          name: t.String(),
+        }),
       }),
     }),
   ),
@@ -24,7 +54,7 @@ export const PresenceModel = {
     data: t.Object({
       id: t.String(),
       userId: t.String(),
-      locationId: t.String(),
+      locationAccessId: t.String(),
       in: t.Nullable(t.String()),
       out: t.Nullable(t.String()),
       in_lat: t.Number(),
@@ -34,6 +64,7 @@ export const PresenceModel = {
       status: t.Union([
         t.Literal("hadir"),
         t.Literal("terlambat"),
+        t.Literal("pulang"),
         t.Literal("alpa"),
         t.Literal("cuti"),
       ]),
@@ -42,7 +73,10 @@ export const PresenceModel = {
   presenceBody: t.Object({
     lat: t.Number(),
     lng: t.Number(),
-    locationId: t.String(),
+    locationAccessId: t.String(),
+  }),
+  presenceGetByIdBody: t.Object({
+    id: t.String(),
   }),
 } as const;
 export type PresenceModel = {

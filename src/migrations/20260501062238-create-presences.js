@@ -26,7 +26,7 @@ export default {
       },
       in: {
         type: Sequelize.DATE,
-        allowNull: false,
+        allowNull: true,
       },
       out: {
         type: Sequelize.DATE,
@@ -34,11 +34,11 @@ export default {
       },
       in_lat: {
         type: Sequelize.DECIMAL(10, 8),
-        allowNull: false,
+        allowNull: true,
       },
       in_long: {
         type: Sequelize.DECIMAL(11, 8),
-        allowNull: false,
+        allowNull: true,
       },
       out_lat: {
         type: Sequelize.DECIMAL(10, 8),
@@ -49,7 +49,7 @@ export default {
         allowNull: true,
       },
       status: {
-        type: Sequelize.ENUM('hadir', 'terlambat', 'alpa', 'cuti'),
+        type: Sequelize.ENUM('hadir', 'terlambat', 'pulang', 'alpa', 'cuti'),
         allowNull: false,
       },
       createdAt: {

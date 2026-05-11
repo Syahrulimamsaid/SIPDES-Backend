@@ -1,3 +1,4 @@
+import { status } from "elysia";
 import type { LocationModel } from "./model";
 import { ResponseError } from "../../response/response-error";
 import { LocationAccess, Location, Presence } from "../../models/index";
@@ -28,38 +29,44 @@ export class LocationService {
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
 
-    const locationIds = locations.map((l: any) => l.locationId);
+    const locationIds = locations.map((l: any) => l.id);
 
     const presences = await Presence.findAll({
       where: {
         userId: user.id,
-        locationId: {
+        locationAccessId: {
           [Op.in]: locationIds,
         },
-        in: {
-          [Op.between]: [startOfDay, endOfDay],
-        },
+        [Op.or]: [
+          {
+            in: null,
+          },
+          {
+            in: {
+              [Op.between]: [startOfDay, endOfDay],
+            },
+          },
+        ],
+        [Op.or]: [
+          {
+            out: null,
+          },
+          {
+            out: {
+              [Op.between]: [startOfDay, endOfDay],
+            },
+          },
+        ],
       },
     });
 
     const presenceMap: Record<string, any> = {};
     presences.forEach((p: any) => {
-      presenceMap[p.locationId] = p;
+      presenceMap[p.locationAccessId] = p;
     });
 
     return locations.map((item: any) => {
-      const p = presenceMap[item.locationId];
-
-      let status = "";
-
-      if (p) {
-        if (p.in && !p.out) {
-          status = "masuk";
-        } else if (p.in && p.out) {
-          status = "hadir";
-        }
-      }
-
+      const p = presenceMap[item.id];
       return {
         id: item.id,
         description: item.description,
@@ -71,9 +78,8 @@ export class LocationService {
           lng: String(item.Location.lng),
           radius: String(item.Location.radius),
         },
-
         presence: {
-          status,
+          status: p?.status ?? "",
           in: p?.in ? new Date(p.in).toISOString() : null,
           out: p?.out ? new Date(p.out).toISOString() : null,
         },

@@ -4,11 +4,15 @@ import { PresenceModel } from "./model";
 import { PresenceService } from "./service";
 
 export class PresenceController {
-    static async get(user: any) {
+  static async get(user: any) {
     const data = await PresenceService.get(user);
-    console.log(data);
     return data;
   }
+  static async getById(id:string,user: any) {
+    const data = await PresenceService.getById(id, user);
+    return data;
+  }
+
   static async presence(body: PresenceModel["presenceBody"], user: any) {
     const data = await PresenceService.presence(body, user);
     return data;
