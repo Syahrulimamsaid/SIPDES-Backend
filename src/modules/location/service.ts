@@ -39,17 +39,9 @@ export class LocationService {
         },
         [Op.or]: [
           {
-            in: null,
-          },
-          {
             in: {
               [Op.between]: [startOfDay, endOfDay],
             },
-          },
-        ],
-        [Op.or]: [
-          {
-            out: null,
           },
           {
             out: {
@@ -86,7 +78,6 @@ export class LocationService {
       };
     });
   }
-
   static async checkLocation(body: LocationModel["locationCheckBody"]) {
     const location = await Location.findOne({ where: { id: body.locationId } });
 

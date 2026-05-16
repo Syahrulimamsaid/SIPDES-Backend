@@ -8,13 +8,23 @@ export class PresenceController {
     const data = await PresenceService.get(user);
     return data;
   }
-  static async getById(id:string,user: any) {
+  static async getById(id: string, user: any) {
     const data = await PresenceService.getById(id, user);
     return data;
   }
 
-  static async presence(body: PresenceModel["presenceBody"], user: any) {
-    const data = await PresenceService.presence(body, user);
+  static async getByQueue(user: any) {
+    const data = await PresenceService.getByQueue(user);
+    return data;
+  }
+
+  static async presenceQueue(body: PresenceModel["presenceBody"], user: any) {
+    const data = await PresenceService.presenceQueue(body, user);
+    return data;
+  }
+
+  static async presence(body: PresenceModel["presenceQueue"]) {
+    const data = await PresenceService.presence(body);
     return data;
   }
 }

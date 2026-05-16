@@ -9,6 +9,8 @@ import {
 import { Op, fn, col } from "sequelize";
 import { getDistance } from "../../helpers/getDistance";
 import { v4 as uuidv4 } from "uuid";
+import { redis } from "../../config/redis";
+import { Response } from "../../response/response";
 
 export class PresenceService {
   static async get(user: any) {
@@ -134,7 +136,7 @@ export class PresenceService {
       in_lat: Number(presence.in_lat),
       in_long: Number(presence.in_long),
       out_lat: Number(presence.out_lat),
-      out_long: Number(presence.out_long) ,
+      out_long: Number(presence.out_long),
       status: presence.status ?? "",
       location_access: {
         id: presence.LocationAccess?.id,
@@ -147,13 +149,36 @@ export class PresenceService {
     };
   }
 
-  static async presence(body: PresenceModel["presenceBody"], user: any) {
-    const location = await LocationAccess.findAll({
-      where: { userId: user.id },
+  static async getByQueue(user: any) {
+    const result = await redis.lrange("presence", 0, -1);
+
+    if (!result || result === null) {
+      throw ResponseError(404, "Data not found");
+    }
+
+    const data = result
+      .map((item) => {
+        try {
+          return JSON.parse(item);
+        } catch {
+          return null;
+        }
+      })
+      .filter((item) => item && item.userId === user.id);
+
+    if (!data || data.length == 0) {
+      throw ResponseError(404, "Data not found");
+    }
+    return data;
+  }
+
+  static async presenceQueue(body: PresenceModel["presenceBody"], user: any) {
+    const location = await LocationAccess.findOne({
+      where: { userId: user.id, id: body.locationAccessId },
       include: [
         {
           model: Location,
-          attributes: ["lat", "lng", "radius"],
+          attributes: ["name", "lat", "lng", "radius"],
           required: true,
         },
       ],
@@ -178,21 +203,21 @@ export class PresenceService {
       attributes: ["in_time", "out_time"],
     });
 
-    const normalizePresence = (data: any) => ({
-      id: String(data.id),
-      userId: String(data.userId),
-      locationAccessId: String(data.locationAccessId),
-
-      in: data.in ? new Date(data.in).toISOString() : null,
-      out: data.out ? new Date(data.out).toISOString() : null,
-
-      in_lat: Number(data.in_lat),
-      in_long: Number(data.in_long),
-      out_lat: data.out_lat ? Number(data.out_lat) : null,
-      out_long: data.out_long ? Number(data.out_long) : null,
-
-      status: data.status,
-    });
+    const payload = {
+      userId: user.id,
+      lat: body.lat,
+      lng: body.lng,
+      location_access: {
+        id: location.id,
+        description: location.description,
+        location: {
+          name: location.Location?.name,
+        },
+      },
+      type: "masuk",
+      status: "masuk",
+      created_at: new Date(),
+    };
 
     const today = new Date();
     const now = today.toTimeString().split(" ")[0];
@@ -209,65 +234,80 @@ export class PresenceService {
       },
     });
 
-    if (!existing && now < limitTime.out_time) {
-      var status = "masuk";
-
-      if (now > limitTime.in_time && now < limitTime.out_time) {
-        status = "terlambat";
-      }
-
-      const presence = await Presence.create({
-        id: uuidv4(),
-        userId: user.id,
-        locationAccessId: body.locationAccessId,
-        in: new Date(),
-        in_lat: body.lat,
-        in_long: body.lng,
-        status: status,
-      });
-
-      return {
-        type: "IN",
-        data: normalizePresence(presence),
-      };
+    if (existing && existing.out) {
+      throw ResponseError(400, "Presensi hari ini sudah lengkap");
     }
 
-    if (existing && !existing.out) {
+    if (!existing && now > limitTime.in_time && now < limitTime.out_time) {
+      payload.status = "terlambat";
+    } else {
       if (now < limitTime.out_time) {
         throw ResponseError(400, "Presensi pulang belum bisa dilakukan");
       }
 
-      existing.out = new Date();
-      existing.out_lat = body.lat;
-      existing.out_long = body.lng;
-
-      await existing.save();
-
-      return {
-        type: "OUT",
-        data: normalizePresence(existing),
-      };
-    }
-    if (!existing) {
-      if (now < limitTime.out_time) {
-        throw ResponseError(400, "Presensi pulang belum bisa dilakukan");
+      if (existing && !existing.out) {
+        payload.status = "hadir";
       }
-      const presence = await Presence.create({
-        id: uuidv4(),
-        userId: user.id,
-        locationAccessId: body.locationAccessId,
-        out: new Date(),
-        out_lat: body.lat,
-        out_long: body.lng,
-        status: "pulang",
-      });
 
-      return {
-        type: "OUT",
-        data: normalizePresence(presence),
-      };
+      if (!existing) {
+        payload.status = "pulang";
+      }
+
+      payload.type = "pulang";
     }
 
-    throw ResponseError(400, "Presensi hari ini sudah lengkap");
+    await redis.lpush("presence", JSON.stringify(payload));
+    return Response(202, "Presence Queue");
+  }
+
+  static async presence(data: any) {
+    if (data.status == "hadir") {
+      const startOfDay = new Date().setHours(0, 0, 0, 0);
+      const endOfDay = new Date().setHours(23, 59, 59, 999);
+
+      await Presence.update(
+        {
+          out: data.created_at,
+          out_lat: data.lat,
+          out_long: data.lng,
+          status: data.status,
+        },
+        {
+          where: {
+            userId: data.userId,
+            locationAccessId: data.location_access.id,
+            in: {
+              [Op.between]: [startOfDay, endOfDay],
+            },
+          },
+        },
+      );
+    }
+
+    if (data.status == "terlambat") {
+      await Presence.create({
+        id: uuidv4(),
+        userId: data.userId,
+        locationAccessId: data.location_access.id,
+        status: data.status,
+        in: data.created_at,
+        in_lat: data.lat,
+        in_long: data.lng,
+      });
+    }
+
+    if (data.status == "pulang") {
+      await Presence.create({
+        id: uuidv4(),
+        userId: data.userId,
+        locationAccessId: data.location_access.id,
+        status: data.status,
+        out: data.created_at,
+        out_lat: data.lat,
+        out_long: data.lng,
+      });
+    }
+    
+    return true;
   }
 }

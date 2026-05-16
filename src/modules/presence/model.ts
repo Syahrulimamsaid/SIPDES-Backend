@@ -49,6 +49,30 @@ export const PresenceModel = {
       }),
     }),
   ),
+  presenceQueue: t.Array(
+    t.Object({
+      userId: t.String(),
+      created_at: t.Date(),
+      lat: t.Number(),
+      lng: t.Number(),
+      type: t.Union([t.Literal("masuk"), t.Literal("pulang")]),
+      status: t.Union([
+        t.Literal("masuk"),
+        t.Literal("hadir"),
+        t.Literal("terlambat"),
+        t.Literal("pulang"),
+        t.Literal("alpa"),
+        t.Literal("cuti"),
+      ]),
+      location_access: t.Object({
+        id: t.String(),
+        description: t.String(),
+        location: t.Object({
+          name: t.String(),
+        }),
+      }),
+    }),
+  ),
   presenceResponse: t.Object({
     type: t.Union([t.Literal("IN"), t.Literal("OUT")]),
     data: t.Object({

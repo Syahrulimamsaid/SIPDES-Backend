@@ -30,14 +30,26 @@ location
   )
   .post(
     "/",
-    async ({ body, user }) => {
-      const result = await PresenceController.presence(body, user);
+    async ({ body, user }:any) => {
+      const result = await PresenceController.presenceQueue(body, user);
       return result;
     },
     {
       body: PresenceModel.presenceBody,
       response: {
         200: PresenceModel.presenceResponse,
+      },
+    },
+  )
+  .get(
+    "/process",
+    async ({ user }: any) => {
+      const result = await PresenceController.getByQueue(user);
+      return result;
+    },
+    {
+      response: {
+        200: PresenceModel.presenceQueue,
       },
     },
   );
