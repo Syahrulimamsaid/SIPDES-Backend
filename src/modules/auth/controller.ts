@@ -23,7 +23,4 @@ export class AuthController {
     };
   }
 
-  static async signout(jwt: any) {
-    jwt.signout();
-  }
 }

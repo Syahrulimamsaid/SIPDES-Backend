@@ -1,10 +1,11 @@
+import { User } from "../../interfaces/user.interface";
 import { ResponseError } from "../../response/response-error";
 import type { AuthModel } from "../auth/model";
 import { LocationModel } from "./model";
 import { LocationService } from "./service";
 
 export class LocationController {
-  static async getByAccess(user:any) {
+  static async getByAccess(user:User) {
     const data = await LocationService.getByAccess(user);
     return data;
   }

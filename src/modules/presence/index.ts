@@ -5,9 +5,9 @@ import { PresenceModel } from "../presence/model";
 const location = new Elysia({ prefix: "/presence" });
 location
   .get(
-    "/",
-    async ({ user }: any) => {
-      const result = await PresenceController.get(user);
+    "/:periode",
+    async ({ params: { periode }, user }: any) => {
+      const result = await PresenceController.get(periode, user);
       return result;
     },
     {
@@ -17,7 +17,7 @@ location
     },
   )
   .get(
-    "/:id",
+    "/id/:id",
     async ({ params: { id }, user }: any) => {
       const result = await PresenceController.getById(id, user);
       return result;
@@ -30,7 +30,7 @@ location
   )
   .post(
     "/",
-    async ({ body, user }:any) => {
+    async ({ body, user }: any) => {
       const result = await PresenceController.presenceQueue(body, user);
       return result;
     },

@@ -6,7 +6,7 @@ const location = new Elysia({ prefix: "/location" });
 location
   .get(
     "/access",
-    async ({ user }) => {
+    async ({ user }:any) => {
       const result = await LocationController.getByAccess(user);
       return result;
     },

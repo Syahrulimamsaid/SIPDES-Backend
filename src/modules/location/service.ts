@@ -6,7 +6,7 @@ import { getDistance } from "../../helpers/getDistance";
 import { Op } from "sequelize";
 
 export class LocationService {
-  static async getByAccess(user: any) {
+  static async getByAccess(user: User) {
     const locations = await LocationAccess.findAll({
       where: { userId: user.id },
       attributes: ["id", "description", "locationId"],

@@ -3,6 +3,7 @@ import { AuthModel } from "./model";
 import { jwt } from "@elysia/jwt";
 import { AuthController } from "./controller";
 import { isAuth } from "../../middlewares/auth-middleware";
+import { Response } from "../../response/response";
 
 const auth = new Elysia({ prefix: "/auth" });
 auth
@@ -26,6 +27,11 @@ auth
       body: AuthModel.signInBody,
     },
   )
+  .get("/sign-out", async ({ cookie: { auth } }: any) => {
+    auth.remove();
+
+    return Response(200, "Sign-Out Successfully");
+  })
   .onBeforeHandle(isAuth)
   .get("/me", ({ user }: any) => {
     return user;

@@ -1,3 +1,4 @@
+import { status } from "elysia";
 import type { PresenceModel } from "./model";
 import { ResponseError } from "../../response/response-error";
 import {
@@ -9,20 +10,20 @@ import {
 import { Op, fn, col } from "sequelize";
 import { getDistance } from "../../helpers/getDistance";
 import { v4 as uuidv4 } from "uuid";
-import { redis } from "../../config/redis";
+import redis from "../../config/redis";
 import { Response } from "../../response/response";
+import { User } from "../../interfaces/user.interface";
 
 export class PresenceService {
-  static async get(user: any) {
-    const startOfDay = new Date(
-      new Date().getFullYear(),
-      new Date().getMonth(),
-      1,
-    );
-    startOfDay.setHours(0, 0, 0, 0);
+  static async get(periode: Date, user: User) {
+    let period = new Date(periode);
+    if (!period) period = new Date();
 
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfMonth = new Date(period.getFullYear(), period.getMonth() - 1, 1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const endOfMonth = new Date(period.getFullYear(), period.getMonth(), 0);
+    endOfMonth.setHours(23, 59, 59, 999);
 
     const presence = await Presence.findAll({
       attributes: [
@@ -50,21 +51,13 @@ export class PresenceService {
         userId: user.id,
         [Op.or]: [
           {
-            in: null,
-          },
-          {
             in: {
-              [Op.between]: [startOfDay, endOfDay],
+              [Op.between]: [startOfMonth, endOfMonth],
             },
-          },
-        ],
-        [Op.or]: [
-          {
-            out: null,
           },
           {
             out: {
-              [Op.between]: [startOfDay, endOfDay],
+              [Op.between]: [startOfMonth, endOfMonth],
             },
           },
         ],
@@ -91,7 +84,7 @@ export class PresenceService {
     return result;
   }
 
-  static async getById(id: string, user: any) {
+  static async getById(id: string, user: User) {
     const presence = await Presence.findOne({
       attributes: [
         "id",
@@ -149,11 +142,11 @@ export class PresenceService {
     };
   }
 
-  static async getByQueue(user: any) {
+  private static async getQueue(user: any) {
     const result = await redis.lrange("presence", 0, -1);
 
-    if (!result || result === null) {
-      throw ResponseError(404, "Data not found");
+    if (!result || result == null || result.length === 0) {
+      return [];
     }
 
     const data = result
@@ -161,18 +154,21 @@ export class PresenceService {
         try {
           return JSON.parse(item);
         } catch {
-          return null;
+          return [];
         }
       })
       .filter((item) => item && item.userId === user.id);
 
-    if (!data || data.length == 0) {
-      throw ResponseError(404, "Data not found");
-    }
     return data;
   }
 
-  static async presenceQueue(body: PresenceModel["presenceBody"], user: any) {
+  static async getByQueue(user: User) {
+    const data = await this.getQueue(user);
+    return data;
+  }
+
+  static async presenceQueue(body: PresenceModel["presenceBody"], user: User) {
+    console.log(user);
     const location = await LocationAccess.findOne({
       where: { userId: user.id, id: body.locationAccessId },
       include: [
@@ -234,22 +230,44 @@ export class PresenceService {
       },
     });
 
-    if (existing && existing.out) {
+    var existingQueue;
+    if (!existing) {
+      const queue = await PresenceService.getQueue(user);
+
+      existingQueue = queue.find((a: any) => {
+        return a?.location_access?.id === location.id;
+      });
+    }
+
+    if (
+      (existing && existing.out) ||
+      (existingQueue &&
+        (existingQueue.status == "hadir" || existingQueue.status == "pulang"))
+    ) {
       throw ResponseError(400, "Presensi hari ini sudah lengkap");
     }
 
-    if (!existing && now > limitTime.in_time && now < limitTime.out_time) {
+    if (
+      (!existing || !existingQueue) &&
+      now > limitTime.in_time &&
+      now < limitTime.out_time
+    ) {
       payload.status = "terlambat";
     } else {
       if (now < limitTime.out_time) {
         throw ResponseError(400, "Presensi pulang belum bisa dilakukan");
       }
 
-      if (existing && !existing.out) {
+      if (
+        (existing && !existing.out) ||
+        (existingQueue &&
+          (existingQueue.status == "masuk" ||
+            existingQueue.status == "terlambat"))
+      ) {
         payload.status = "hadir";
       }
 
-      if (!existing) {
+      if (!existing || !existingQueue) {
         payload.status = "pulang";
       }
 
@@ -307,7 +325,7 @@ export class PresenceService {
         out_long: data.lng,
       });
     }
-    
+
     return true;
   }
 }
