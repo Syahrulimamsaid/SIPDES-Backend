@@ -19,7 +19,11 @@ export class PresenceService {
     let period = new Date(periode);
     if (!period) period = new Date();
 
-    const startOfMonth = new Date(period.getFullYear(), period.getMonth() - 1, 1);
+    const startOfMonth = new Date(
+      period.getFullYear(),
+      period.getMonth() - 1,
+      1,
+    );
     startOfMonth.setHours(0, 0, 0, 0);
 
     const endOfMonth = new Date(period.getFullYear(), period.getMonth(), 0);
@@ -62,6 +66,7 @@ export class PresenceService {
           },
         ],
       },
+      order: [[col("date"), "DESC"]]
     });
 
     const result = presence.map((data: any) => {
@@ -168,7 +173,6 @@ export class PresenceService {
   }
 
   static async presenceQueue(body: PresenceModel["presenceBody"], user: User) {
-    console.log(user);
     const location = await LocationAccess.findOne({
       where: { userId: user.id, id: body.locationAccessId },
       include: [
@@ -248,7 +252,8 @@ export class PresenceService {
     }
 
     if (
-      (!existing || !existingQueue) &&
+      !existing &&
+      !existingQueue &&
       now > limitTime.in_time &&
       now < limitTime.out_time
     ) {
@@ -267,7 +272,7 @@ export class PresenceService {
         payload.status = "hadir";
       }
 
-      if (!existing || !existingQueue) {
+      if (!existing && !existingQueue) {
         payload.status = "pulang";
       }
 
@@ -275,7 +280,7 @@ export class PresenceService {
     }
 
     await redis.lpush("presence", JSON.stringify(payload));
-    return Response(202, "Presence Queue");
+    return payload;
   }
 
   static async presence(data: any) {

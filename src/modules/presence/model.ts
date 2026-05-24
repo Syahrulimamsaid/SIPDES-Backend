@@ -74,25 +74,25 @@ export const PresenceModel = {
     }),
   ),
   presenceResponse: t.Object({
-    type: t.Union([t.Literal("IN"), t.Literal("OUT")]),
-    data: t.Object({
+    userId: t.String(),
+    lat: t.Number(),
+    lng: t.Number(),
+    type: t.Union([t.Literal("masuk"), t.Literal("pulang")]),
+    status: t.Union([
+      t.Literal("hadir"),
+      t.Literal("terlambat"),
+      t.Literal("pulang"),
+      t.Literal("alpa"),
+      t.Literal("cuti"),
+    ]),
+    location_access: t.Object({
       id: t.String(),
-      userId: t.String(),
-      locationAccessId: t.String(),
-      in: t.Nullable(t.String()),
-      out: t.Nullable(t.String()),
-      in_lat: t.Number(),
-      in_long: t.Number(),
-      out_lat: t.Nullable(t.Number()),
-      out_long: t.Nullable(t.Number()),
-      status: t.Union([
-        t.Literal("hadir"),
-        t.Literal("terlambat"),
-        t.Literal("pulang"),
-        t.Literal("alpa"),
-        t.Literal("cuti"),
-      ]),
+      description: t.String(),
+      location: t.Object({
+        name: t.String(),
+      }),
     }),
+    created_at: t.Date(),
   }),
   presenceBody: t.Object({
     lat: t.Number(),
