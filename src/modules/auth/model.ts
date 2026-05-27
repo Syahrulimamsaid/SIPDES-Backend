@@ -23,6 +23,12 @@ export const AuthModel = {
     user: t.Optional(t.Any()),
     message: t.Optional(t.String()),
   }),
+
+  changePassBody: t.Object({
+    old_password: t.String(),
+    new_password: t.String(),
+    confirm_password: t.String(),
+  }),
   signInInvalid: t.Literal("Invalid phone number or password"),
 } as const;
 

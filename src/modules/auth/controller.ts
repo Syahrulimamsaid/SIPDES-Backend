@@ -23,4 +23,7 @@ export class AuthController {
     };
   }
 
+  static async changePassword(body: AuthModel["changePassBody"], user: any) {
+    return await AuthService.changePassword(body, user);
+  }
 }

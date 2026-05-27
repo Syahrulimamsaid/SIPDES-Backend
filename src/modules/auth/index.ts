@@ -35,6 +35,15 @@ auth
   .onBeforeHandle(isAuth)
   .get("/me", ({ user }: any) => {
     return user;
-  });
+  })
+  .post(
+    "/change-password",
+    async ({ body, user }: any) => {
+      return await AuthController.changePassword(body, user);
+    },
+    {
+      body: AuthModel.changePassBody,
+    },
+  );
 
 export default auth;
