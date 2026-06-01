@@ -1,57 +1,7 @@
 import { Elysia } from "elysia";
-import { PresenceController } from "./controller";
-import { PresenceModel } from "../presence/model";
+import user from "./routes/user.route";
+import operator from "./routes/operator.route";
 
-const location = new Elysia({ prefix: "/presence" });
-location
-  .get(
-    "/:periode",
-    async ({ params: { periode }, user }: any) => {
-      const result = await PresenceController.get(periode, user);
-      return result;
-    },
-    {
-      response: {
-        200: PresenceModel.presenceGetResponse,
-      },
-    },
-  )
-  .get(
-    "/id/:id",
-    async ({ params: { id }, user }: any) => {
-      const result = await PresenceController.getById(id, user);
-      return result;
-    },
-    {
-      response: {
-        200: PresenceModel.presenceGetSingleResponse,
-      },
-    },
-  )
-  .post(
-    "/",
-    async ({ body, user }: any) => {
-      const result = await PresenceController.presenceQueue(body, user);
-      return result;
-    },
-    {
-      body: PresenceModel.presenceBody,
-      response: {
-        200: PresenceModel.presenceResponse,
-      },
-    },
-  )
-  .get(
-    "/process",
-    async ({ user }: any) => {
-      const result = await PresenceController.getByQueue(user);
-      return result;
-    },
-    {
-      response: {
-        200: PresenceModel.presenceQueue,
-      },
-    },
-  );
-
-export default location;
+const presence = new Elysia();
+presence.use(user).use(operator);
+export default presence;

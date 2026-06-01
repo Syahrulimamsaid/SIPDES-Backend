@@ -6,28 +6,130 @@ import {
   Location,
   LocationAccess,
   Setting,
+  User as Users,
+  Village,
 } from "../../models/index";
 import { Op, fn, col } from "sequelize";
 import { getDistance } from "../../helpers/getDistance";
 import { v4 as uuidv4 } from "uuid";
 import redis from "../../config/redis";
-import { Response } from "../../response/response";
 import { User } from "../../interfaces/user.interface";
+import dayjs from "dayjs";
+import { Response } from "../../response/response";
 
 export class PresenceService {
-  static async get(periode: Date, user: User) {
-    let period = new Date(periode);
-    if (!period) period = new Date();
+  static async get(query: PresenceModel["getQuery"], user: any) {
+    const { periode, status } = query;
+    if (!periode) throw ResponseError(422, "Filtering periode is required");
 
-    const startOfMonth = new Date(
-      period.getFullYear(),
-      period.getMonth() - 1,
-      1,
-    );
-    startOfMonth.setHours(0, 0, 0, 0);
+    let period, villageId;
+    period = dayjs(periode);
+    if (!period) period = dayjs();
 
-    const endOfMonth = new Date(period.getFullYear(), period.getMonth(), 0);
-    endOfMonth.setHours(23, 59, 59, 999);
+    if (user.role != "admin") villageId = user.villageId;
+
+    const startOfMonth = period.startOf("month").format();
+    const endOfMonth = period.endOf("month").format();
+
+    const presence = await Presence.findAll({
+      attributes: [
+        "id",
+        [fn("DATE", fn("COALESCE", col("out"), col("in"))), "date"],
+        "in",
+        "out",
+        "in_lat",
+        "in_long",
+        "out_lat",
+        "out_long",
+        "status",
+      ],
+      include: [
+        {
+          model: LocationAccess,
+          attributes: ["id", "description"],
+          required: true,
+          include: [
+            {
+              model: Location,
+              attributes: ["id", "name"],
+              required: true,
+              where: {
+                ...(villageId && {
+                  villageId: villageId,
+                }),
+              },
+            },
+          ],
+        },
+        {
+          model: Users,
+          attributes: ["id", "fullname", "phone_number"],
+          required: true,
+          include: [
+            {
+              model: Village,
+              attributes: ["id", "name"],
+              required: true,
+            },
+          ],
+        },
+      ],
+      where: {
+        [Op.or]: [
+          {
+            in: {
+              [Op.between]: [startOfMonth, endOfMonth],
+            },
+          },
+          {
+            out: {
+              [Op.between]: [startOfMonth, endOfMonth],
+            },
+          },
+        ],
+        ...(status && {
+          status: status,
+        }),
+      },
+      order: [[col("date"), "DESC"]],
+    });
+
+    const result = presence.map((data: any) => {
+      return {
+        id: data.id,
+        date: data.get("date"),
+        in: data.in,
+        out: data.out,
+        status: data.status ?? "",
+        in_lat: Number(data.in_lat),
+        in_long: Number(data.in_long),
+        out_lat: Number(data.out_lat),
+        out_long: Number(data.out_long),
+        location_access: {
+          id: data.LocationAccess?.id,
+          description: data.LocationAccess?.description,
+          location: {
+            id: data.LocationAccess?.Location.id,
+            name: data.LocationAccess?.Location.name,
+          },
+        },
+        user: {
+          id: data.User.id,
+          fullname: data.User.fullname,
+          phone_number: data.User.phone_number,
+          village: { id: data.User.Village.id, name: data.User.Village.name },
+        },
+      };
+    });
+    return result;
+  }
+
+  static async getByUser(periode: Date, user: User) {
+    let period = dayjs(periode);
+    if (!period) period = dayjs();
+
+    const startOfMonth = period.startOf("month").format();
+    const endOfMonth = period.endOf("month").format();
 
     const presence = await Presence.findAll({
       attributes: [
@@ -66,7 +168,7 @@ export class PresenceService {
           },
         ],
       },
-      order: [[col("date"), "DESC"]]
+      order: [[col("date"), "DESC"]],
     });
 
     const result = presence.map((data: any) => {
@@ -330,6 +432,96 @@ export class PresenceService {
         out_long: data.lng,
       });
     }
+
+    return true;
+  }
+  static async update(body: PresenceModel["updateBody"], user: any) {
+    let userId, villageId;
+    if (user.role == "user") userId = user.id;
+    if (user.role != "admin") villageId = user.villageId;
+
+    if (body.in && body.out && body.in > body.out)
+      throw Response(400, "Waktu pulang harus lebih besar daripada waktu masuk");
+
+    const cek = await Presence.findOne({
+      include: [
+        {
+          model: LocationAccess,
+          required: true,
+          include: [
+            {
+              model: Location,
+              required: true,
+              where: {
+                ...(villageId && {
+                  villageId: villageId,
+                }),
+              },
+            },
+          ],
+        },
+      ],
+      where: {
+        id: body.id,
+        ...(userId && {
+          userId: userId,
+        }),
+      },
+    });
+
+    if (!cek || cek == null) throw Response(404, "Data not found");
+
+    await Presence.update(
+      {
+        in: body.in,
+        out: body.out,
+        status: body.status,
+      },
+      {
+        where: {
+          id: body.id,
+          ...(userId && {
+            userId: userId,
+          }),
+        },
+        force: true,
+      },
+    );
+
+    return true;
+  }
+
+  static async destroy(id: string, user: any) {
+    let userId, villageId;
+    if (user.role == "user") userId = user.id;
+    if (user.role != "admin") villageId = user.villageId;
+
+    await Presence.destroy({
+      include: [
+        {
+          model: LocationAccess,
+          required: true,
+          include: [
+            {
+              model: Location,
+              required: true,
+              where: {
+                ...(villageId && {
+                  villageId: villageId,
+                }),
+              },
+            },
+          ],
+        },
+      ],
+      where: {
+        id: id,
+        ...(userId && {
+          userId: userId,
+        }),
+      },
+      force: true,
+    });
 
     return true;
   }

@@ -32,6 +32,10 @@ export const PresenceModel = {
       date: t.Date(),
       in: t.Nullable(t.Date()),
       out: t.Nullable(t.Date()),
+      in_lat: t.Optional(t.Nullable(t.Number())),
+      in_long: t.Optional(t.Nullable(t.Number())),
+      out_lat: t.Optional(t.Nullable(t.Number())),
+      out_long: t.Optional(t.Nullable(t.Number())),
       status: t.Union([
         t.Literal("hadir"),
         t.Literal("terlambat"),
@@ -47,6 +51,17 @@ export const PresenceModel = {
           name: t.String(),
         }),
       }),
+      user: t.Optional(
+        t.Object({
+          id: t.String(),
+          fullname: t.String(),
+          phone_number: t.String(),
+          village: t.Object({
+            id: t.String(),
+            name: t.String(),
+          }),
+        }),
+      ),
     }),
   ),
   presenceQueue: t.Array(
@@ -93,6 +108,33 @@ export const PresenceModel = {
       }),
     }),
     created_at: t.Date(),
+  }),
+  getQuery: t.Object({
+    periode: t.Date(),
+    villageId: t.Optional(t.String()),
+    status: t.Optional(
+      t.Union([
+        t.Literal("hadir"),
+        t.Literal("terlambat"),
+        t.Literal("pulang"),
+        t.Literal("alpa"),
+        t.Literal("cuti"),
+      ]),
+    ),
+  }),
+  updateBody: t.Object({
+    id: t.String(),
+    in: t.Nullable(t.Date()),
+    out: t.Nullable(t.Date()),
+    status: t.Optional(
+      t.Union([
+        t.Literal("hadir"),
+        t.Literal("terlambat"),
+        t.Literal("pulang"),
+        t.Literal("alpa"),
+        t.Literal("cuti"),
+      ]),
+    ),
   }),
   presenceBody: t.Object({
     lat: t.Number(),
