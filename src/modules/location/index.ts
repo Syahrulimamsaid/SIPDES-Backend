@@ -28,6 +28,19 @@ location
         200: LocationModel.locationCheckResponse,
       },
     },
+  )
+  .post(
+    "/access/user",
+    async ({ body }) => {
+      const result = await LocationController.getByAccessUser(body);
+      return result;
+    },
+    {
+      body: LocationModel.locationAccessByUserBody,
+      response: {
+        200: LocationModel.locationAccessUserResponse,
+      },
+    },
   );
 
 export default location;

@@ -2,7 +2,6 @@ import { Elysia } from "elysia";
 import { PresenceController } from "../controller";
 import { PresenceModel } from "../../presence/model";
 import { Response } from "../../../response/response";
-import presenceModel from "../../../models/presence.model";
 
 const operator = new Elysia({ prefix: "/operator/presence" });
 operator
@@ -29,6 +28,16 @@ operator
       response: {
         200: PresenceModel.presenceGetResponse,
       },
+    },
+  )
+  .post(
+    "/",
+    async ({ body, user }: any) => {
+      await PresenceController.create(body, user);
+      return Response(201, "Created successfully");
+    },
+    {
+      body: PresenceModel.createBody,
     },
   )
   .delete("/:id", async ({ params: { id }, user }: any) => {

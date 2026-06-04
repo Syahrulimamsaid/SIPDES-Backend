@@ -14,4 +14,9 @@ export class LocationController {
     const data = await LocationService.checkLocation(body);
     return data;
   }
+
+  static async getByAccessUser(body: LocationModel["locationAccessByUserBody"]) {
+    const data = await LocationService.getByAccessUser(body);
+    return data;
+  }
 }

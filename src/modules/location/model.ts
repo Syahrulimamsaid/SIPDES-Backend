@@ -30,6 +30,22 @@ export const LocationModel = {
     distance: t.String(),
     isInside: t.Boolean(),
   }),
+  locationAccessByUserBody: t.Object({
+    userId: t.String(),
+  }),
+  locationAccessUserResponse: t.Array(
+    t.Object({
+      id: t.String(),
+      description: t.String(),
+      location: t.Object({
+        id: t.String(),
+        name: t.String(),
+        lat: t.String(),
+        lng: t.String(),
+        radius: t.String(),
+      }),
+    }),
+  ),
 } as const;
 export type LocationModel = {
   [k in keyof typeof LocationModel]: UnwrapSchema<(typeof LocationModel)[k]>;

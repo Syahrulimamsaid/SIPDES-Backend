@@ -6,6 +6,7 @@ import { isAuth } from "../middlewares/auth-middleware";
 import auth from "../modules/auth/index";
 import location from "../modules/location/index";
 import presence from "../modules/presence/index"; 
+import user from "../modules/user/index"; 
 
 const elysia = new Elysia({ prefix: "/api" });
 elysia
@@ -43,6 +44,7 @@ elysia
   .onBeforeHandle(isAuth)
   //setelah ini route sudah login
   .use(location)
+  .use(user)
   .use(presence);
 
 export default elysia;

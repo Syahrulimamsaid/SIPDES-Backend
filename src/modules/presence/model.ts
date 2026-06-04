@@ -144,6 +144,24 @@ export const PresenceModel = {
   presenceGetByIdBody: t.Object({
     id: t.String(),
   }),
+  createBody: t.Object({
+    userId: t.String(),
+    // date: t.String(),
+    in: t.Optional(t.Nullable(t.Date())),
+    out: t.Optional(t.Nullable(t.Date())),
+    status: t.Union([
+      t.Literal("hadir"),
+      t.Literal("terlambat"),
+      t.Literal("pulang"),
+      t.Literal("alpa"),
+      t.Literal("cuti"),
+    ]),
+    // in_lat: t.Optional(t.Nullable(t.Number())),
+    // in_long: t.Optional(t.Nullable(t.Number())),
+    // out_lat: t.Optional(t.Nullable(t.Number())),
+    // out_long: t.Optional(t.Nullable(t.Number())),
+    locationAccessId: t.Optional(t.Nullable(t.String())),
+  }),
 } as const;
 export type PresenceModel = {
   [k in keyof typeof PresenceModel]: UnwrapSchema<(typeof PresenceModel)[k]>;

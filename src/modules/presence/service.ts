@@ -1,4 +1,3 @@
-import { status } from "elysia";
 import type { PresenceModel } from "./model";
 import { ResponseError } from "../../response/response-error";
 import {
@@ -437,7 +436,7 @@ export class PresenceService {
   }
   static async update(body: PresenceModel["updateBody"], user: any) {
     let userId, villageId;
-    if (user.role == "user") userId = user.id;
+    if (user.role == "umum") userId = user.id;
     if (user.role != "admin") villageId = user.villageId;
 
     if (body.in && body.out && body.in > body.out)
@@ -493,7 +492,7 @@ export class PresenceService {
 
   static async destroy(id: string, user: any) {
     let userId, villageId;
-    if (user.role == "user") userId = user.id;
+    if (user.role == "umum") userId = user.id;
     if (user.role != "admin") villageId = user.villageId;
 
     await Presence.destroy({
@@ -524,5 +523,70 @@ export class PresenceService {
     });
 
     return true;
+  }
+
+  static async create(body: PresenceModel["createBody"], user: any) {
+    const targetUser = await Users.findOne({ where: { id: body.userId } });
+    if (!targetUser) throw ResponseError(404, "User tidak ditemukan");
+
+
+    if (user.role !== "admin") {
+      if (targetUser.villageId !== user.villageId) throw ResponseError(403, "Akses ditolak. Desa user tidak sama dengan desa operator.");
+    }
+
+    const locationAccess = await LocationAccess.findOne({
+      include: [
+        {
+          model: Location,
+          required: true,
+        },
+      ],
+      where: { userId: body.userId, id: body.locationAccessId },
+    });
+
+    if (!locationAccess) throw ResponseError(404, "Location access not found");
+
+
+    if (!body.in && !body.out) throw ResponseError(422, "Waktu tidak boleh kosong semua");
+    
+    let date = body.in || body.out;
+    const startOfDay = dayjs(date).startOf('day').toISOString();
+    const endOfDay = dayjs(date).endOf('day').toISOString();
+
+    const existing = await Presence.findOne({
+      where: {
+        userId: body.userId,
+        locationAccessId: body.locationAccessId,
+        [Op.or]: [
+          {
+            in: {
+              [Op.between]: [startOfDay, endOfDay],
+            },
+          },
+          {
+            out: {
+              [Op.between]: [startOfDay, endOfDay],
+            },
+          }
+        ],
+      },
+    });
+
+    if (existing) throw ResponseError(404, "Data already exist");
+
+    const presence = await Presence.create({
+      id: uuidv4(),
+      userId: body.userId,
+      locationAccessId: body.locationAccessId,
+      in: body.in,
+      out: body.out,
+      in_lat: locationAccess.Location.lat,
+      in_long: locationAccess.Location.long,
+      out_lat: locationAccess.Location.lat,
+      out_long: locationAccess.Location.long,
+      status: body.status,
+    });
+
+    return presence;
   }
 }

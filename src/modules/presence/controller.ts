@@ -1,6 +1,4 @@
 import { User } from "../../interfaces/user.interface";
-import { ResponseError } from "../../response/response-error";
-import type { AuthModel } from "../auth/model";
 import { PresenceModel } from "./model";
 import { PresenceService } from "./service";
 
@@ -41,6 +39,11 @@ export class PresenceController {
 
   static async destory(id: string, user: any) {
     const data = await PresenceService.destroy(id, user);
+    return data;
+  }
+
+  static async create(body: PresenceModel["createBody"], user: any) {
+    const data = await PresenceService.create(body, user);
     return data;
   }
 }

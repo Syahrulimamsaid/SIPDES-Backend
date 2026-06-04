@@ -98,4 +98,37 @@ export class LocationService {
       isInside: distance <= location.radius,
     };
   }
+  
+  static async getByAccessUser(body: LocationModel["locationAccessByUserBody"]) {
+    const locations = await LocationAccess.findAll({
+      where: { userId: body.userId },
+      attributes: ["id", "description", "locationId"],
+      include: [
+        {
+          model: Location,
+          attributes: ["id", "name", "lat", "lng", "radius"],
+          required: true,
+        },
+      ],
+    });
+
+    if (!locations || locations.length === 0) {
+      throw ResponseError(404, "Data not found");
+    }
+
+    return locations.map((item: any) => {
+      return {
+        id: item.id,
+        description: item.description,
+
+        location: {
+          id: item.Location.id,
+          name: item.Location.name,
+          lat: String(item.Location.lat),
+          lng: String(item.Location.lng),
+          radius: String(item.Location.radius),
+        },
+      };
+    });
+  }
 }
