@@ -7,6 +7,7 @@ import auth from "../modules/auth/index";
 import location from "../modules/location/index";
 import presence from "../modules/presence/index"; 
 import user from "../modules/user/index"; 
+import global from "../modules/global/index";
 
 const elysia = new Elysia({ prefix: "/api" });
 elysia
@@ -45,6 +46,7 @@ elysia
   //setelah ini route sudah login
   .use(location)
   .use(user)
-  .use(presence);
+  .use(presence)
+  .use(global);
 
 export default elysia;

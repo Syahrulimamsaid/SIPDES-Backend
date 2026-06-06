@@ -13,7 +13,7 @@ operator
     },
     {
       response: {
-        200: PresenceModel.presenceGetResponse,
+        200: PresenceModel.presenceGetPaginatedResponse,
       },
     },
   )

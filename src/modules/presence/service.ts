@@ -18,7 +18,7 @@ import { Response } from "../../response/response";
 
 export class PresenceService {
   static async get(query: PresenceModel["getQuery"], user: any) {
-    const { periode, status } = query;
+    const { periode, status, page, limit } = query;
     if (!periode) throw ResponseError(422, "Filtering periode is required");
 
     let period, villageId;
@@ -30,7 +30,12 @@ export class PresenceService {
     const startOfMonth = period.startOf("month").format();
     const endOfMonth = period.endOf("month").format();
 
-    const presence = await Presence.findAll({
+    const pageVal = Math.max(1, Number(page || 1));
+    const limitVal = Math.max(1, Number(limit || 10));
+    const offset = (pageVal - 1) * limitVal;
+
+    const { count, rows: presence } = await Presence.findAndCountAll({
+      distinct: true,
       attributes: [
         "id",
         [fn("DATE", fn("COALESCE", col("out"), col("in"))), "date"],
@@ -90,7 +95,9 @@ export class PresenceService {
           status: status,
         }),
       },
-      order: [[col("date"), "DESC"]],
+      order: [["createdAt", "desc"]],
+      limit: limitVal,
+      offset: offset,
     });
 
     const result = presence.map((data: any) => {
@@ -120,7 +127,15 @@ export class PresenceService {
         },
       };
     });
-    return result;
+    return {
+      data: result,
+      meta: {
+        page: pageVal,
+        limit: limitVal,
+        total: count,
+        totalPages: Math.ceil(count / limitVal),
+      },
+    };
   }
 
   static async getByUser(periode: Date, user: User) {

@@ -4,6 +4,6 @@ import { UserService } from "./service";
 
 export class UserController {
   static async get(user: any) {
-  return await UserService.get(user);
+    return await UserService.get(user);
   }
 }

@@ -64,6 +64,52 @@ export const PresenceModel = {
       ),
     }),
   ),
+  presenceGetPaginatedResponse: t.Object({
+    data: t.Array(
+      t.Object({
+        id: t.String(),
+        date: t.Date(),
+        in: t.Nullable(t.Date()),
+        out: t.Nullable(t.Date()),
+        in_lat: t.Optional(t.Nullable(t.Number())),
+        in_long: t.Optional(t.Nullable(t.Number())),
+        out_lat: t.Optional(t.Nullable(t.Number())),
+        out_long: t.Optional(t.Nullable(t.Number())),
+        status: t.Union([
+          t.Literal("hadir"),
+          t.Literal("terlambat"),
+          t.Literal("pulang"),
+          t.Literal("alpa"),
+          t.Literal("cuti"),
+        ]),
+        location_access: t.Object({
+          id: t.String(),
+          description: t.String(),
+          location: t.Object({
+            id: t.String(),
+            name: t.String(),
+          }),
+        }),
+        user: t.Optional(
+          t.Object({
+            id: t.String(),
+            fullname: t.String(),
+            phone_number: t.String(),
+            village: t.Object({
+              id: t.String(),
+              name: t.String(),
+            }),
+          }),
+        ),
+      }),
+    ),
+    meta: t.Object({
+      page: t.Number(),
+      limit: t.Number(),
+      total: t.Number(),
+      totalPages: t.Number(),
+    }),
+  }),
   presenceQueue: t.Array(
     t.Object({
       userId: t.String(),
@@ -121,6 +167,8 @@ export const PresenceModel = {
         t.Literal("cuti"),
       ]),
     ),
+    page: t.Optional(t.Numeric()),
+    limit: t.Optional(t.Numeric()),
   }),
   updateBody: t.Object({
     id: t.String(),

@@ -3,7 +3,7 @@ export default (sequelize:any, DataTypes:any) => {
     id: { type: DataTypes.UUID, primaryKey: true },
     name: DataTypes.STRING,
     address: DataTypes.STRING,
-    districtId: DataTypes.UUID,
+    subDistrictId: DataTypes.UUID,
   }, {
     tableName: "villages",
   });
