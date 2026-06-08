@@ -84,7 +84,6 @@ export class GlobalService {
         include: [{
           model: User,
           required: true,
-          attributes: [],
           where: userWhere
         }],
       })
