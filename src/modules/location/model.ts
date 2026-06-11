@@ -46,6 +46,57 @@ export const LocationModel = {
       }),
     }),
   ),
+  createAccessBody: t.Object({
+    userId: t.String(),
+    locationId: t.String(),
+    description: t.Optional(t.Nullable(t.String())),
+  }),
+  createAccessResponse: t.Object({
+    id: t.String(),
+    userId: t.String(),
+    locationId: t.String(),
+    description: t.Nullable(t.String()),
+  }),
+  allAccessResponse: t.Array(
+    t.Object({
+      id: t.String(),
+      fullname: t.String(),
+      phone_number: t.String(),
+      village: t.Optional(
+        t.Nullable(
+          t.Object({
+            id: t.String(),
+            name: t.String(),
+            address: t.String(),
+          }),
+        ),
+      ),
+      location_access: t.Array(
+        t.Object({
+          id: t.String(),
+          description: t.Nullable(t.String()),
+          location: t.Object({
+            id: t.String(),
+            name: t.String(),
+            lat: t.Number(),
+            lng: t.Number(),
+            radius: t.Number(),
+            villageId: t.Nullable(t.String()),
+          }),
+        }),
+      ),
+    }),
+  ),
+  locationsResponse: t.Array(
+    t.Object({
+      id: t.String(),
+      name: t.String(),
+      lat: t.Number(),
+      lng: t.Number(),
+      radius: t.Number(),
+      villageId: t.Nullable(t.String()),
+    }),
+  ),
 } as const;
 export type LocationModel = {
   [k in keyof typeof LocationModel]: UnwrapSchema<(typeof LocationModel)[k]>;

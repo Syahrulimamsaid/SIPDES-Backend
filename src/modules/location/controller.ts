@@ -19,4 +19,24 @@ export class LocationController {
     const data = await LocationService.getByAccessUser(body);
     return data;
   }
+
+  static async createAccess(body: LocationModel["createAccessBody"], user: any) {
+    const data = await LocationService.createAccess(body, user);
+    return data;
+  }
+
+  static async deleteAccess(id: string, user: any) {
+    const data = await LocationService.deleteAccess(id, user);
+    return data;
+  }
+
+  static async getAllAccess(user: any) {
+    const data = await LocationService.getAllAccess(user);
+    return data;
+  }
+
+  static async getLocations(user: any) {
+    const data = await LocationService.getLocations(user);
+    return data;
+  }
 }
