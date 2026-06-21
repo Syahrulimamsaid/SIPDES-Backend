@@ -1,13 +1,14 @@
 import dayjs from "dayjs";
 import { User, Location, Village, Presence } from "../../models/index";
 import { Op } from "sequelize";
+import { CalendarController } from "../calendar/controller";
+import { GlobalModel } from "./model";
+import { ResponseError } from "../../response/response-error";
 
 export class GlobalService {
   static async getStats(user: any) {
     let userWhere: any = {};
     let locationWhere: any = {};
-    const start = dayjs().startOf('day').toDate();
-    const end = dayjs().endOf('day').toDate();
 
     if (user.role !== "admin") {
       userWhere.villageId = user.villageId;
@@ -29,10 +30,21 @@ export class GlobalService {
     };
   }
 
-  static async getStatsPresence(user: any) {
+  static async getStatsPresence(query: GlobalModel["getQueryStatsPresence"], user: any) {
+    const { start, end } = query;
+
+    let startDate, endDate;
     let userWhere: any = {};
-    const start = dayjs().startOf('day').toDate();
-    const end = dayjs().endOf('day').toDate();
+
+    if (!start || !end) {
+      startDate = dayjs().startOf('days');
+      endDate = dayjs().endOf('days');
+    } else {
+      startDate = dayjs(start).startOf('days');
+      endDate = dayjs(end).endOf('days');
+    }
+
+    if (!startDate.isValid() || !endDate.isValid()) throw ResponseError(400, "Format periode tidak valid. Gunakan format YYYY-MM atau YYYY-MM-DD.");
 
     if (user.role !== "admin") {
       userWhere.villageId = user.villageId;
@@ -42,6 +54,9 @@ export class GlobalService {
     const startOfYear = dayjs().startOf('year').toDate();
     const endOfYear = dayjs().endOf('year').toDate();
 
+    const calendarController = new CalendarController();
+    const workDays = await calendarController.workDays(start, end);
+
     const [totalUsers, presences, yearlyPresences] = await Promise.all([
       User.count({ where: userWhere }),
       Presence.findAll({
@@ -49,12 +64,12 @@ export class GlobalService {
           [Op.or]: [
             {
               in: {
-                [Op.between]: [start, end],
+                [Op.between]: [startDate.toDate(), endDate.toDate()],
               },
             },
             {
               out: {
-                [Op.between]: [start, end],
+                [Op.between]: [startDate.toDate(), endDate.toDate()],
               },
             },
           ],
@@ -89,29 +104,55 @@ export class GlobalService {
       })
     ]);
 
+    const users = await User.findAll({
+      attributes: ['id'],
+      where: userWhere
+    });
+
     const presentUserIds = new Set<string>();
     const onTimeUserIds = new Set<string>();
     const lateUserIds = new Set<string>();
+    const cuti = new Set<string>();
+    const noKet = new Set<string>();
+    const aggMonth = endDate.diff(startDate, 'month') + 1;
+    let terlambat_total = 0, hadir = 0;
 
     for (const p of presences) {
       const uId = p.userId;
       presentUserIds.add(uId);
-      if (p.status === "terlambat") {
+      
+      if (p.status == "terlambat" || p.status == "pulang") {
         lateUserIds.add(uId);
-      } else if (p.status === "hadir" || p.status === "pulang") {
+        terlambat_total++;
+      } else if (p.status == "hadir") {
         onTimeUserIds.add(uId);
+        hadir++;
+      } else if (p.status == "cuti") {
+        cuti.add(uId)
+      } else {
+        noKet.add(uId);
       }
-    }
-
-    for (const uId of lateUserIds) {
-      onTimeUserIds.delete(uId);
     }
 
     const presence_total = presences.length;
     const presence_user_total = presentUserIds.size;
     const hadir_total = onTimeUserIds.size;
-    const terlambat_total = lateUserIds.size;
+    const user_terlambat_total = lateUserIds.size;
+    const cuti_total = cuti.size;
     const belum_absen_total = Math.max(0, totalUsers - presence_user_total);
+    const presentase_hadir =  workDays > 0
+        ? Number((((hadir + terlambat_total) / workDays) * 100).toFixed(2))
+        : 0;
+ 
+    let alpha_total = 0;
+    users.forEach((data: any) => {
+      const presence = presences.filter((p: any) => p.userId === data.id);
+      const hadir = presence.filter((p: any) => p.status === "hadir");
+      const terlambat = presence.filter((p: any) => p.status === "terlambat" || p.status === "pulang");
+      const cuti = presence.filter((p: any) => p.status === "cuti");
+
+      alpha_total += Math.max(0, workDays - (hadir.length + terlambat.length + cuti.length));
+    });
 
     const monthNames = [
       "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -129,9 +170,9 @@ export class GlobalService {
       if (!date) continue;
       const monthIndex = dayjs(date).month();
       if (monthIndex >= 0 && monthIndex < 12) {
-        if (p.status === "terlambat") {
+        if (p.status === "terlambat" || p.status === "pulang") {
           presence_status[monthIndex].terlambat++;
-        } else if (p.status === "hadir" || p.status === "pulang") {
+        } else if (p.status === "hadir") {
           presence_status[monthIndex].tepat_waktu++;
         }
       }
@@ -141,8 +182,12 @@ export class GlobalService {
       presence_total,
       presence_user_total,
       hadir_total,
+      user_terlambat_total,
       terlambat_total,
+      cuti_total,
       belum_absen_total,
+      alpha_total,
+      presentase_hadir,
       presence_status,
     };
   }

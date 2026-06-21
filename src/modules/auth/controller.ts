@@ -11,7 +11,7 @@ export class AuthController {
         phone_number: user.phone_number,
         fullname: user.fullname,
         role: user.role,
-        villageId: user.village.id,
+        villageId: user.village?.id || null,
       },
       {
         expiresIn: process.env.JWT_EXPIRES_IN || "30m",

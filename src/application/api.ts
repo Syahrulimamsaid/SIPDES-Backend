@@ -7,7 +7,9 @@ import auth from "../modules/auth/index";
 import location from "../modules/location/index";
 import presence from "../modules/presence/index"; 
 import user from "../modules/user/index"; 
+import report from "../modules/report/index";
 import global from "../modules/global/index";
+import calendar from "../modules/calendar/index";
 
 const elysia = new Elysia({ prefix: "/api" });
 elysia
@@ -47,6 +49,9 @@ elysia
   .use(location)
   .use(user)
   .use(presence)
-  .use(global);
+  .use(report)
+  .use(global)
+  .use(calendar);
 
 export default elysia;
+

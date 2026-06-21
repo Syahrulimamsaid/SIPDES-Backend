@@ -16,8 +16,8 @@ global.get(
   },
 ).get(
   "/stats/presence",
-  async ({ user }: any) => {
-    const result = await GlobalController.getStatsPresence(user);
+  async ({ query, user }: any) => {
+    const result = await GlobalController.getStatsPresence(query, user);
     return result;
   },
   {

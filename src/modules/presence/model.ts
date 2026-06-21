@@ -194,7 +194,6 @@ export const PresenceModel = {
   }),
   createBody: t.Object({
     userId: t.String(),
-    // date: t.String(),
     in: t.Optional(t.Nullable(t.Date())),
     out: t.Optional(t.Nullable(t.Date())),
     status: t.Union([
@@ -204,10 +203,6 @@ export const PresenceModel = {
       t.Literal("alpa"),
       t.Literal("cuti"),
     ]),
-    // in_lat: t.Optional(t.Nullable(t.Number())),
-    // in_long: t.Optional(t.Nullable(t.Number())),
-    // out_lat: t.Optional(t.Nullable(t.Number())),
-    // out_long: t.Optional(t.Nullable(t.Number())),
     locationAccessId: t.Optional(t.Nullable(t.String())),
   }),
 } as const;

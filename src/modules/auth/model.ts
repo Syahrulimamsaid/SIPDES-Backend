@@ -12,18 +12,17 @@ export const AuthModel = {
     fullname: t.String(),
     role: t.String(),
     token: t.String(),
-    village: t.Object({
+    village: t.Nullable(t.Object({
       id: t.String(),
       name: t.String(),
       address: t.String(),
-    }),
+    })),
   }),
   signCheckResponse: t.Object({
     status: t.Boolean(),
     user: t.Optional(t.Any()),
     message: t.Optional(t.String()),
   }),
-
   changePassBody: t.Object({
     old_password: t.String(),
     new_password: t.String(),

@@ -1,3 +1,4 @@
+import { GlobalModel } from "./model";
 import { GlobalService } from "./service";
 
 export class GlobalController {
@@ -5,7 +6,7 @@ export class GlobalController {
     return await GlobalService.getStats(user);
   }
 
-  static async getStatsPresence(user: any) {
-    return await GlobalService.getStatsPresence(user);
+  static async getStatsPresence(query: GlobalModel["getQueryStatsPresence"], user: any) {
+    return await GlobalService.getStatsPresence(query, user);
   }
 }

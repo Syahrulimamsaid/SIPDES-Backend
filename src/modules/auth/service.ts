@@ -5,6 +5,7 @@ import { User, Village } from "../../models/index";
 
 export class AuthService {
   static async signIn(body: AuthModel["signInBody"]) {
+
     const user = await User.findOne({
       where: { phone_number: body.phone_number },
       attributes: [
@@ -19,7 +20,6 @@ export class AuthService {
         {
           model: Village,
           attributes: ["id", "name", "address"],
-          required: false,
         },
       ],
     });
