@@ -97,13 +97,11 @@ export class CalendarService {
       throw ResponseError(400, "Format tanggal tidak valid");
     }
 
-    // Check if weekend (Sabtu = 6, Minggu = 0)
     const dayOfWeek = targetDate.day();
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       throw ResponseError(400, "Tidak dapat membuat event kalender pada hari libur (akhir pekan)");
     }
 
-    // Check if there is already an event on the same date
     const existingEvent = await Calendar.findOne({
       where: {
         date: body.date
@@ -113,7 +111,6 @@ export class CalendarService {
       throw ResponseError(400, "Event kalender pada tanggal ini sudah ada");
     }
 
-    // Check if weekend or day off is already in database as "off"
     const existingHoliday = await Calendar.findOne({
       where: {
         date: body.date,

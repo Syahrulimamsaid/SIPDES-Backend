@@ -10,6 +10,9 @@ import user from "../modules/user/index";
 import report from "../modules/report/index";
 import global from "../modules/global/index";
 import calendar from "../modules/calendar/index";
+import setting from "../modules/setting";
+import village from "../modules/village/index";
+import subDistrict from "../modules/sub-district/index";
 
 const elysia = new Elysia({ prefix: "/api" });
 elysia
@@ -51,7 +54,10 @@ elysia
   .use(presence)
   .use(report)
   .use(global)
-  .use(calendar);
+  .use(setting)
+  .use(calendar)
+  .use(village)
+  .use(subDistrict);
 
 export default elysia;
 

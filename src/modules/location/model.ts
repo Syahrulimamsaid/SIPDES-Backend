@@ -94,9 +94,43 @@ export const LocationModel = {
       lat: t.Number(),
       lng: t.Number(),
       radius: t.Number(),
-      villageId: t.Nullable(t.String()),
+      village: t.Object({
+        id: t.String(),
+        name: t.String(),
+        address: t.String(),
+      }),
     }),
   ),
+  createLocationBody: t.Object({
+    name: t.String(),
+    lat: t.Number(),
+    lng: t.Number(),
+    radius: t.Number(),
+    villageId: t.String(),
+  }),
+  createLocationResponse: t.Object({
+    id: t.String(),
+    name: t.String(),
+    lat: t.Number(),
+    lng: t.Number(),
+    radius: t.Number(),
+    villageId: t.String(),
+  }),
+  updateLocationBody: t.Object({
+    name: t.Optional(t.String()),
+    lat: t.Optional(t.Number()),
+    lng: t.Optional(t.Number()),
+    radius: t.Optional(t.Number()),
+    villageId: t.Optional(t.String()),
+  }),
+  updateLocationResponse: t.Object({
+    id: t.String(),
+    name: t.String(),
+    lat: t.Number(),
+    lng: t.Number(),
+    radius: t.Number(),
+    villageId: t.String(),
+  }),
 } as const;
 export type LocationModel = {
   [k in keyof typeof LocationModel]: UnwrapSchema<(typeof LocationModel)[k]>;

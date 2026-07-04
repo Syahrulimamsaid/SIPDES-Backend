@@ -39,4 +39,19 @@ export class LocationController {
     const data = await LocationService.getLocations(user);
     return data;
   }
+
+  static async createLocation(body: LocationModel["createLocationBody"], user: any) {
+    const data = await LocationService.createLocation(body, user);
+    return data;
+  }
+
+  static async updateLocation(id: string, body: LocationModel["updateLocationBody"], user: any) {
+    const data = await LocationService.updateLocation(id, body, user);
+    return data;
+  }
+
+  static async deleteLocation(id: string, user: any) {
+    const data = await LocationService.deleteLocation(id, user);
+    return data;
+  }
 }

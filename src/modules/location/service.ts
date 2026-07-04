@@ -1,13 +1,12 @@
-import { status } from "elysia";
 import type { LocationModel } from "./model";
 import { ResponseError } from "../../response/response-error";
-import { LocationAccess, Location, Presence, User, Village } from "../../models/index";
+import { LocationAccess, Location, Presence, User, Village, sequelize } from "../../models/index";
 import { getDistance } from "../../helpers/getDistance";
 import { Op } from "sequelize";
 import { v4 as uuidv4 } from "uuid";
 
 export class LocationService {
-  static async getByAccess(user: User) {
+  static async getByAccess(user: any) {
     const locations = await LocationAccess.findAll({
       where: { userId: user.id },
       attributes: ["id", "description", "locationId"],
@@ -99,7 +98,7 @@ export class LocationService {
       isInside: distance <= location.radius,
     };
   }
-  
+
   static async getByAccessUser(body: LocationModel["locationAccessByUserBody"]) {
     const locations = await LocationAccess.findAll({
       where: { userId: body.userId },
@@ -300,7 +299,14 @@ export class LocationService {
     }
 
     const locations = await Location.findAll({
-      where: whereClause
+      where: whereClause,
+      include: [
+        {
+          model: Village,
+          attributes: ["id", "name", "address"],
+          required: false,
+        },
+      ],
     });
 
     return locations.map((loc: any) => ({
@@ -309,7 +315,165 @@ export class LocationService {
       lat: Number(loc.lat),
       lng: Number(loc.lng),
       radius: Number(loc.radius),
-      villageId: loc.villageId
+      village: loc.Village
+        ? {
+          id: loc.Village.id,
+          name: loc.Village.name,
+          address: loc.Village.address,
+        }
+        : null,
     }));
+  }
+
+  static async createLocation(body: LocationModel["createLocationBody"], user: any) {
+    if (user.role !== "admin") {
+      throw ResponseError(403, "Akses ditolak");
+    }
+
+    const village = await Village.findByPk(body.villageId);
+    if (!village) {
+      throw ResponseError(400, "Desa tidak ditemukan");
+    }
+
+    const existingName = await Location.findOne({
+      where: sequelize.where(
+        sequelize.fn("lower", sequelize.col("name")),
+        body.name.toLowerCase()
+      )
+    });
+    if (existingName) {
+      throw ResponseError(400, "Nama lokasi sudah digunakan");
+    }
+
+    const existingCoords = await Location.findOne({
+      where: {
+        lat: body.lat,
+        lng: body.lng
+      }
+    });
+    if (existingCoords) {
+      throw ResponseError(400, "Lokasi dengan koordinat yang sama sudah ada");
+    }
+
+    const id = uuidv4();
+    const newLocation = await Location.create({
+      id,
+      name: body.name,
+      lat: body.lat,
+      lng: body.lng,
+      radius: body.radius,
+      villageId: body.villageId,
+    });
+
+    return {
+      id: newLocation.id,
+      name: newLocation.name,
+      lat: Number(newLocation.lat),
+      lng: Number(newLocation.lng),
+      radius: Number(newLocation.radius),
+      villageId: newLocation.villageId,
+    };
+  }
+
+  static async updateLocation(id: string, body: LocationModel["updateLocationBody"], user: any) {
+    if (user.role !== "admin") {
+      throw ResponseError(403, "Akses ditolak");
+    }
+
+    const location = await Location.findByPk(id);
+    if (!location) {
+      throw ResponseError(404, "Lokasi tidak ditemukan");
+    }
+
+    const updateData: any = {};
+
+    if (body.name !== undefined) {
+      const existingName = await Location.findOne({
+        where: {
+          id: { [Op.ne]: id },
+          [Op.and]: sequelize.where(
+            sequelize.fn("lower", sequelize.col("name")),
+            body.name.toLowerCase()
+          )
+        }
+      });
+      if (existingName) {
+        throw ResponseError(400, "Nama lokasi sudah digunakan");
+      }
+      updateData.name = body.name;
+    }
+
+    if (body.lat !== undefined || body.lng !== undefined) {
+      const targetLat = body.lat !== undefined ? body.lat : Number(location.lat);
+      const targetLng = body.lng !== undefined ? body.lng : Number(location.lng);
+
+      const existingCoords = await Location.findOne({
+        where: {
+          id: { [Op.ne]: id },
+          lat: targetLat,
+          lng: targetLng
+        }
+      });
+      if (existingCoords) {
+        throw ResponseError(400, "Lokasi dengan koordinat yang sama sudah ada");
+      }
+      if (body.lat !== undefined) updateData.lat = body.lat;
+      if (body.lng !== undefined) updateData.lng = body.lng;
+    }
+
+    if (body.radius !== undefined) {
+      updateData.radius = body.radius;
+    }
+
+    if (body.villageId !== undefined) {
+      const village = await Village.findByPk(body.villageId);
+      if (!village) {
+        throw ResponseError(400, "Desa tidak ditemukan");
+      }
+      updateData.villageId = body.villageId;
+    }
+
+    await location.update(updateData);
+
+    return {
+      id: location.id,
+      name: location.name,
+      lat: Number(location.lat),
+      lng: Number(location.lng),
+      radius: Number(location.radius),
+      villageId: location.villageId,
+    };
+  }
+
+  static async deleteLocation(id: string, user: any) {
+    if (user.role !== "admin") {
+      throw ResponseError(403, "Akses ditolak");
+    }
+
+    const location = await Location.findByPk(id);
+    if (!location) {
+      throw ResponseError(404, "Lokasi tidak ditemukan");
+    }
+
+    const locationAccesses = await LocationAccess.findAll({
+      where: { locationId: id }
+    });
+    const locationAccessIds = locationAccesses.map((la: any) => la.id);
+
+    if (locationAccessIds.length > 0) {
+      const hasPresence = await Presence.findOne({
+        where: {
+          locationAccessId: {
+            [Op.in]: locationAccessIds
+          }
+        }
+      });
+      if (hasPresence) {
+        throw ResponseError(400, "Lokasi tidak dapat dihapus karena memiliki data presensi");
+      }
+    }
+
+    await Location.destroy({ where: { id } });
+    return true;
   }
 }

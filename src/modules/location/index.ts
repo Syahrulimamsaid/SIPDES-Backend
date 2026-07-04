@@ -93,6 +93,50 @@ location
         200: LocationModel.locationsResponse,
       },
     },
+  )
+  .post(
+    "/",
+    async ({ body, user }: any) => {
+      const result = await LocationController.createLocation(body, user);
+      return result;
+    },
+    {
+      body: LocationModel.createLocationBody,
+      response: {
+        200: LocationModel.createLocationResponse,
+      },
+    },
+  )
+  .patch(
+    "/:id",
+    async ({ params: { id }, body, user }: any) => {
+      const result = await LocationController.updateLocation(id, body, user);
+      return result;
+    },
+    {
+      params: t.Object({
+        id: t.String(),
+      }),
+      body: LocationModel.updateLocationBody,
+      response: {
+        200: LocationModel.updateLocationResponse,
+      },
+    },
+  )
+  .delete(
+    "/:id",
+    async ({ params: { id }, user }: any) => {
+      const result = await LocationController.deleteLocation(id, user);
+      return result;
+    },
+    {
+      params: t.Object({
+        id: t.String(),
+      }),
+      response: {
+        200: t.Boolean(),
+      },
+    },
   );
 
 export default location;

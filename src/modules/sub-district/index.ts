@@ -1,54 +1,54 @@
 import { Elysia, t } from "elysia";
-import { VillageModel } from "./model";
-import { VillageController } from "./controller";
+import { SubDistrictModel } from "./model";
+import { SubDistrictController } from "./controller";
 
-const village = new Elysia({ prefix: "/village" });
-village
+const subDistrict = new Elysia({ prefix: "/sub-district" });
+subDistrict
   .get(
     "/",
     async ({ user }: any) => {
-      const result = await VillageController.get(user);
+      const result = await SubDistrictController.get(user);
       return result;
     },
     {
       response: {
-        200: VillageModel.getResponse,
+        200: SubDistrictModel.getResponse,
       },
     },
   )
   .post(
     "/",
     async ({ body, user }: any) => {
-      const result = await VillageController.create(body, user);
+      const result = await SubDistrictController.create(body, user);
       return result;
     },
     {
-      body: VillageModel.createBody,
+      body: SubDistrictModel.createBody,
       response: {
-        200: VillageModel.createResponse,
+        200: SubDistrictModel.createResponse,
       },
     },
   )
   .patch(
     "/:id",
     async ({ params: { id }, body, user }: any) => {
-      const result = await VillageController.update(id, body, user);
+      const result = await SubDistrictController.update(id, body, user);
       return result;
     },
     {
       params: t.Object({
         id: t.String(),
       }),
-      body: VillageModel.updateBody,
+      body: SubDistrictModel.updateBody,
       response: {
-        200: VillageModel.updateResponse,
+        200: SubDistrictModel.updateResponse,
       },
     },
   )
   .delete(
     "/:id",
     async ({ params: { id }, user }: any) => {
-      const result = await VillageController.destroy(id, user);
+      const result = await SubDistrictController.destroy(id, user);
       return result;
     },
     {
@@ -61,4 +61,4 @@ village
     },
   );
 
-export default village;
+export default subDistrict;
