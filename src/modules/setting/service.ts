@@ -5,6 +5,16 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 
 export class SettingService {
+  static async get() {
+    const setting = await Setting.findOne();
+    if (!setting) throw ResponseError(404, "Data tidak ditemukan");
+
+    return {
+      in_time: setting.in_time,
+      out_time: setting.out_time,
+    };
+  }
+
   static async update(body: SettingModel['updateBody'], user: any) {
     if (user.role !== "admin") throw ResponseError(403, "Akses ditolak");
     if (!body.in_time || !body.out_time) throw ResponseError(400, "Body is required");

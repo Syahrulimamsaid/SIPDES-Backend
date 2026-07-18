@@ -1,6 +1,5 @@
 import { Elysia } from "elysia";
 import { AuthModel } from "./model";
-import { jwt } from "@elysia/jwt";
 import { AuthController } from "./controller";
 import { isAuth } from "../../middlewares/auth-middleware";
 import { Response } from "../../response/response";
@@ -9,8 +8,8 @@ const auth = new Elysia({ prefix: "/auth" });
 auth
   .post(
     "/sign-in",
-    async ({ body, cookie: { auth }, jwt }: any) => {
-      const result = await AuthController.signIn(body, jwt);
+    async ({ body, cookie: { auth, device }, jwt }: any) => {
+      const result = await AuthController.signIn(body, jwt, device);
 
       auth.set({
         value: result.token,
@@ -19,6 +18,15 @@ auth
         sameSite: "lax", // none
         path: "/",
         maxAge: 60 * 30,
+      });
+
+      device.set({
+        value: result.device,
+        httpOnly: true,
+        secure: false,
+        sameSite: "lax", // none
+        path: "/",
+        maxAge: 60 * 60 * 24 * 2,
       });
 
       return result;

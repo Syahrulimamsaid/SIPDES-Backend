@@ -3,6 +3,7 @@ import { ResponseError } from "../../response/response-error";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import type { UserModel } from "./model";
+import { Op } from "sequelize";
 
 export class UserService {
   static async get(user: any) {
@@ -15,10 +16,13 @@ export class UserService {
       where: {
         ...(userId && {
           id: userId,
-
         }),
         ...(villageId && user.role == 'operator' && {
           role: "umum",
+          villageId: villageId
+        }),
+        ...(user.role == 'admin' && {
+          role: { [Op.in]: ["operator", "umum"] },
         })
       },
       include: [
@@ -32,6 +36,10 @@ export class UserService {
             }),
           },
         },
+      ],
+      order: [
+        [Village, "name", "ASC"],
+        ["fullname", "ASC"],
       ],
     });
 
@@ -127,7 +135,7 @@ export class UserService {
     if (!targetUser) throw ResponseError(404, "User tidak ditemukan");
 
     if (user.role !== "admin") {
-      if (targetUser.villageId !== user.villageId || targetUser.role !== "umum") {
+      if (targetUser.villageId !== user.villageId && targetUser.role == "operator") {
         throw ResponseError(403, "Akses ditolak");
       }
     }
@@ -216,5 +224,16 @@ export class UserService {
       role: targetUser.role,
       villageId: targetUser.villageId,
     };
+  }
+
+  static async resetDevice(params: UserModel["resetDeviceBody"], user: any) {
+    const userId = params.userId;
+    const targetUser = await User.findOne({ where: { id: userId } });
+    if (!targetUser) throw ResponseError(404, "User tidak ditemukan");
+
+    if (user.role == "umum" || (targetUser.villageId !== user.villageId && targetUser.role == "operator")) throw ResponseError(403, "Akses ditolak");
+
+    await targetUser.update({ device: null });
+    return true;
   }
 }

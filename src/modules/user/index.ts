@@ -29,6 +29,19 @@ user
       },
     },
   )
+  .post(
+    "/reset/:userId/device",
+    async ({ params, user }: any) => {
+      const result = await UserController.resetDevice(params, user);
+      return result;
+    },
+    {
+      params: UserModel.resetDeviceBody,
+      response: {
+        200: t.Boolean(),
+      },
+    },
+  )
   .patch(
     "/:id",
     async ({ params: { id }, body, user }: any) => {

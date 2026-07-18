@@ -4,6 +4,7 @@ import { LocationAccess, Location, Presence, User, Village, sequelize } from "..
 import { getDistance } from "../../helpers/getDistance";
 import { Op } from "sequelize";
 import { v4 as uuidv4 } from "uuid";
+import { PresenceService } from "../presence/service";
 
 export class LocationService {
   static async getByAccess(user: any) {
@@ -57,8 +58,29 @@ export class LocationService {
       presenceMap[p.locationAccessId] = p;
     });
 
+    const queue = await PresenceService.getByQueue(user);
+
     return locations.map((item: any) => {
       const p = presenceMap[item.id];
+      let presenceStatus = p?.status ?? "";
+      let presenceIn = p?.in ? new Date(p.in).toISOString() : null;
+      let presenceOut = p?.out ? new Date(p.out).toISOString() : null;
+
+      const queueForLocation = queue
+        .filter((q: any) => q.location_access?.id === item.id)
+        .reverse();
+
+      for (const q of queueForLocation) {
+        const timeStr = q.created_at ? new Date(q.created_at).toISOString() : null;
+        if (q.status === "masuk" || q.status === "terlambat") {
+          presenceStatus = q.status;
+          presenceIn = timeStr;
+        } else if (q.status === "hadir" || q.status === "pulang") {
+          presenceStatus = q.status;
+          presenceOut = timeStr;
+        }
+      }
+
       return {
         id: item.id,
         description: item.description,
@@ -71,9 +93,9 @@ export class LocationService {
           radius: String(item.Location.radius),
         },
         presence: {
-          status: p?.status ?? "",
-          in: p?.in ? new Date(p.in).toISOString() : null,
-          out: p?.out ? new Date(p.out).toISOString() : null,
+          status: presenceStatus,
+          in: presenceIn,
+          out: presenceOut,
         },
       };
     });
@@ -90,7 +112,9 @@ export class LocationService {
       Number(location.lat),
       Number(location.lng),
     );
-
+    console.log(body.lat,
+      body.lng);
+    console.log(distance, location.radius);
     return {
       name: location.name,
       location: location.lat + " " + location.lng,
@@ -223,11 +247,9 @@ export class LocationService {
     }
 
     const whereUser: any = { role: "umum" };
-    const whereLocation: any = {};
 
     if (user.role === "operator") {
       whereUser.villageId = user.villageId;
-      whereLocation.villageId = user.villageId;
     }
 
     const users = await User.findAll({
@@ -241,7 +263,6 @@ export class LocationService {
         {
           model: Location,
           required: false,
-          where: whereLocation,
           through: {
             attributes: ["id", "description"],
           },

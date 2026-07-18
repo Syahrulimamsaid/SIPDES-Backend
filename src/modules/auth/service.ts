@@ -2,9 +2,10 @@ import type { AuthModel } from "./model";
 import { ResponseError } from "../../response/response-error";
 import bcrypt from "bcrypt";
 import { User, Village } from "../../models/index";
+import { v4 as uuidv4 } from "uuid";
 
 export class AuthService {
-  static async signIn(body: AuthModel["signInBody"]) {
+  static async signIn(body: AuthModel["signInBody"], device :any) {
 
     const user = await User.findOne({
       where: { phone_number: body.phone_number },
@@ -31,12 +32,14 @@ export class AuthService {
     if (!(await bcrypt.compare(body.password, user.password)))
       throw ResponseError(400, "Invalid phone number or password");
 
-    // if (!user.device || user.device == null) {
-    //   user.update({ device: body.device });
-    // } else {
-    //   if ((user.device != body.device))
-    //     throw ResponseError(400, "Invalid device");
-    // }
+    if (user.role == 'umum') {
+      if (!user.device || user.device == null) {
+        user.update({ device: uuidv4() });
+      } else {
+        if ((user.device != device))
+          throw ResponseError(400, "Invalid device");
+      }
+    }
 
     return {
       id: user.id,
@@ -44,6 +47,7 @@ export class AuthService {
       fullname: user.fullname,
       role: user.role,
       village: user.Village,
+      device: user.device,
     };
   }
 

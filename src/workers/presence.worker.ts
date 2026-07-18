@@ -13,8 +13,11 @@ async function presenceWorker() {
 
       if (!result) continue;
 
-      const [, data] = result;
-      const payload = JSON.parse(data);
+      const [, userId] = result;
+      const payloadStr = await redis.rpop(`presence:${userId}`);
+      if (!payloadStr) continue;
+
+      const payload = JSON.parse(payloadStr);
 
       await PresenceController.presence(payload);
     } catch (error) {

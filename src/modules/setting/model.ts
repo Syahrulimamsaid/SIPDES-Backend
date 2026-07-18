@@ -14,6 +14,11 @@ export const SettingModel = {
     in_time: t.String(),
     out_time: t.String(),
   }),
+
+  getResponse: t.Object({
+    in_time: t.String(),
+    out_time: t.String(),
+  }),
 } as const;
 
 export type SettingModel = {

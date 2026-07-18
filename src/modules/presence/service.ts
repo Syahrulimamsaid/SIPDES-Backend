@@ -7,6 +7,7 @@ import {
   Setting,
   User as Users,
   Village,
+  Calendar,
 } from "../../models/index";
 import { Op, fn, col } from "sequelize";
 import { getDistance } from "../../helpers/getDistance";
@@ -140,10 +141,10 @@ export class PresenceService {
 
   static async getByUser(periode: Date, user: User) {
     let period = dayjs(periode);
-    if (!period) period = dayjs();
+    if (!period.isValid()) period = dayjs();
 
-    const startOfMonth = period.startOf("month").format();
-    const endOfMonth = period.endOf("month").format();
+    const startOfMonth = period.startOf("month");
+    const endOfMonth = period.endOf("month");
 
     const presence = await Presence.findAll({
       attributes: [
@@ -172,36 +173,88 @@ export class PresenceService {
         [Op.or]: [
           {
             in: {
-              [Op.between]: [startOfMonth, endOfMonth],
+              [Op.between]: [startOfMonth.format(), endOfMonth.format()],
             },
           },
           {
             out: {
-              [Op.between]: [startOfMonth, endOfMonth],
+              [Op.between]: [startOfMonth.format(), endOfMonth.format()],
             },
           },
         ],
       },
-      order: [[col("date"), "DESC"]],
     });
 
-    const result = presence.map((data: any) => {
-      return {
-        id: data.id,
-        date: data.get("date"),
-        in: data.in,
-        out: data.out,
-        status: data.status ?? "",
-        location_access: {
-          id: data.LocationAccess?.id,
-          description: data.LocationAccess?.description,
-          location: {
-            id: data.LocationAccess?.Location.id,
-            name: data.LocationAccess?.Location.name,
-          },
+    const calendars = await Calendar.findAll({
+      where: {
+        date: {
+          [Op.between]: [startOfMonth.format("YYYY-MM-DD"), endOfMonth.format("YYYY-MM-DD")],
         },
-      };
+      },
     });
+
+    const calendarMap: Record<string, any> = {};
+    calendars.forEach((c: any) => {
+      calendarMap[c.date] = c;
+    });
+
+    const presenceMap: Record<string, any[]> = {};
+    presence.forEach((p: any) => {
+      const d = dayjs(p.get("date")).format("YYYY-MM-DD");
+      if (!presenceMap[d]) {
+        presenceMap[d] = [];
+      }
+      presenceMap[d].push(p);
+    });
+
+    const daysInMonth = period.daysInMonth();
+    const result: any[] = [];
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = period.date(day);
+      const dateStr = currentDate.format("YYYY-MM-DD");
+
+      const dayPresences = presenceMap[dateStr] || [];
+      const calEvent = calendarMap[dateStr];
+
+      if (dayPresences.length > 0) {
+        dayPresences.forEach((p: any) => {
+          result.push({
+            id: p.id,
+            date: currentDate.hour(12).toDate(),
+            in: p.in,
+            out: p.out,
+            status: p.status ?? "",
+            location_access: {
+              id: p.LocationAccess?.id,
+              description: p.LocationAccess?.description,
+              location: {
+                id: p.LocationAccess?.Location.id,
+                name: p.LocationAccess?.Location.name,
+              },
+            },
+            event: calEvent ? {
+              name: calEvent.name,
+              type: calEvent.type,
+            } : null,
+          });
+        });
+      } else {
+        result.push({
+          id: null,
+          date: currentDate.hour(12).toDate(),
+          in: null,
+          out: null,
+          status: calEvent ? (calEvent.type === "off" ? "libur" : calEvent.type === "t" ? "tugas" : calEvent.type === "h" ? "hadir" : "") : "",
+          location_access: null,
+          event: calEvent ? {
+            name: calEvent.name,
+            type: calEvent.type,
+          } : null,
+        });
+      }
+    }
+
     return result;
   }
 
@@ -264,7 +317,7 @@ export class PresenceService {
   }
 
   private static async getQueue(user: any) {
-    const result = await redis.lrange("presence", 0, -1);
+    const result = await redis.lrange(`presence:${user.id}`, 0, -1);
 
     if (!result || result == null || result.length === 0) {
       return [];
@@ -275,10 +328,10 @@ export class PresenceService {
         try {
           return JSON.parse(item);
         } catch {
-          return [];
+          return null;
         }
       })
-      .filter((item) => item && item.userId === user.id);
+      .filter((item) => item !== null);
 
     return data;
   }
@@ -289,6 +342,18 @@ export class PresenceService {
   }
 
   static async presenceQueue(body: PresenceModel["presenceBody"], user: User) {
+    const todayStr = dayjs().format("YYYY-MM-DD");
+    const holiday = await Calendar.findOne({
+      where: {
+        date: todayStr,
+        type: "off",
+      },
+    });
+
+    if (holiday) {
+      throw ResponseError(400, "Tidak dapat melakukan presensi pada hari libur nasional");
+    }
+
     const location = await LocationAccess.findOne({
       where: { userId: user.id, id: body.locationAccessId },
       include: [
@@ -395,7 +460,8 @@ export class PresenceService {
       payload.type = "pulang";
     }
 
-    await redis.lpush("presence", JSON.stringify(payload));
+    await redis.lpush(`presence:${user.id}`, JSON.stringify(payload));
+    await redis.lpush("presence", user.id);
     return payload;
   }
 
@@ -449,6 +515,7 @@ export class PresenceService {
 
     return true;
   }
+
   static async update(body: PresenceModel["updateBody"], user: any) {
     let userId, villageId;
     if (user.role == "umum") userId = user.id;
@@ -563,7 +630,7 @@ export class PresenceService {
 
 
     if (!body.in && !body.out) throw ResponseError(422, "Waktu tidak boleh kosong semua");
-    
+
     let date = body.in || body.out;
     const startOfDay = dayjs(date).startOf('day').toISOString();
     const endOfDay = dayjs(date).endOf('day').toISOString();

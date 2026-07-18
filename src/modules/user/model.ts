@@ -44,6 +44,9 @@ export const UserModel = {
     role: t.String(),
     villageId: t.Nullable(t.String()),
   }),
+  resetDeviceBody: t.Object({
+    userId: t.String(),
+  }),
 } as const;
 
 export type UserModel = {

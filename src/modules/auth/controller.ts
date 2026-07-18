@@ -1,10 +1,10 @@
-import { ResponseError } from "../../response/response-error";
 import type { AuthModel } from "./model";
 import { AuthService } from "./service";
 
 export class AuthController {
-  static async signIn(body: AuthModel["signInBody"], jwt: any) {
-    const user = await AuthService.signIn(body);
+  static async signIn(body: AuthModel["signInBody"], jwt: any, device: any) {
+    const user = await AuthService.signIn(body, device);
+
     const token = await jwt.sign(
       {
         id: user.id,

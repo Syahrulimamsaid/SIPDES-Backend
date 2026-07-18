@@ -1,4 +1,4 @@
-import { ResponseError } from "../../response/response-error";
+
 import type { UserModel } from "./model";
 import { UserService } from "./service";
 
@@ -17,5 +17,9 @@ export class UserController {
 
   static async update(id: string, body: UserModel["updateBody"], user: any) {
     return await UserService.update(id, body, user);
+  }
+
+  static async resetDevice(params: UserModel["resetDeviceBody"], user: any) {
+    return await UserService.resetDevice(params, user);
   }
 }

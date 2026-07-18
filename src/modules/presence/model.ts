@@ -28,7 +28,7 @@ export const PresenceModel = {
   }),
   presenceGetResponse: t.Array(
     t.Object({
-      id: t.String(),
+      id: t.Nullable(t.String()),
       date: t.Date(),
       in: t.Nullable(t.Date()),
       out: t.Nullable(t.Date()),
@@ -42,15 +42,28 @@ export const PresenceModel = {
         t.Literal("pulang"),
         t.Literal("alpa"),
         t.Literal("cuti"),
+        t.Literal("libur"),
+        t.Literal("tugas"),
+        t.Literal(""),
       ]),
-      location_access: t.Object({
-        id: t.String(),
-        description: t.String(),
-        location: t.Object({
+      location_access: t.Nullable(
+        t.Object({
           id: t.String(),
-          name: t.String(),
-        }),
-      }),
+          description: t.String(),
+          location: t.Object({
+            id: t.String(),
+            name: t.String(),
+          }),
+        })
+      ),
+      event: t.Optional(
+        t.Nullable(
+          t.Object({
+            name: t.String(),
+            type: t.String(),
+          })
+        )
+      ),
       user: t.Optional(
         t.Object({
           id: t.String(),

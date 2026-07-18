@@ -1,6 +1,4 @@
 import { User } from "../../interfaces/user.interface";
-import { ResponseError } from "../../response/response-error";
-import type { AuthModel } from "../auth/model";
 import { LocationModel } from "./model";
 import { LocationService } from "./service";
 
