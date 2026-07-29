@@ -16,17 +16,18 @@ export class GlobalService {
       locationWhere.villageId = user.villageId;
     }
 
-    const [totalUsers, totalLocations, village] = await Promise.all([
+    const [totalUsers, totalLocations, village, totalVillages] = await Promise.all([
       User.count({ where: userWhere }),
       Location.count({ where: locationWhere }),
       Village.findOne({ where: { id: user.villageId } }),
-
+      Village.count(),
     ]);
 
     return {
       user_total: totalUsers,
       location_total: totalLocations,
-      village_name: village.name,
+      village_name: village?.name || "-",
+      village_total: totalVillages
     };
   }
 
@@ -114,13 +115,12 @@ export class GlobalService {
     const lateUserIds = new Set<string>();
     const cuti = new Set<string>();
     const noKet = new Set<string>();
-    const aggMonth = endDate.diff(startDate, 'month') + 1;
     let terlambat_total = 0, hadir = 0;
 
     for (const p of presences) {
       const uId = p.userId;
       presentUserIds.add(uId);
-      
+
       if (p.status == "terlambat" || p.status == "pulang") {
         lateUserIds.add(uId);
         terlambat_total++;

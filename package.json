@@ -3,6 +3,7 @@
   "version": "1.0.50",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "bun build src/index.ts --target=bun --outfile dist/index.js",
     "dev": "TZ=Asia/Jakarta bun run --watch src/index.ts --host",
     "start": "TZ=Asia/Jakarta bun run src/index.ts"
   },

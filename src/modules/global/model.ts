@@ -10,6 +10,7 @@ export const GlobalModel = {
     user_total: t.Number(),
     location_total: t.Number(),
     village_name: t.String(),
+    village_total: t.Number(),
   }),
   statsPresenceResponse: t.Object({
     presence_total: t.Number(),
